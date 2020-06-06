@@ -33,8 +33,8 @@ var (
 	ProgressLen         int      = 75
 	Progress            string   = " "
 	ProgressColors      []string = []string{color.CyanBg}
-	ProgressSpace       string   = " "
-	ProgressSpaceColors []string = []string{color.WhiteBg}
+	ProgressSpace       string   = "."
+	ProgressSpaceColors []string = []string{}
 	Percent             string   = "%"
 )
 
