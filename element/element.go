@@ -49,13 +49,13 @@ func New(str string, colors []string) *Element {
  * Private Methods
  */
 
-func (elem *Element) calculateCoordinates(elemStr string, xCursor, yCursor int) {
+func (elem *Element) calculateCoordinates(xCursor, yCursor int) {
 	// startX
 	elem.startX = xCursor
 	// startY
 	elem.startY = yCursor
 
-	elemLines := strings.Split(elemStr, "\n")
+	elemLines := strings.Split(elem.Str, "\n")
 	// minX
 	if len(elemLines) > 1 {
 		elem.minX = 0
@@ -130,8 +130,8 @@ func (elem *Element) Print() {
 
 	// NOTE
 	// The coordinates of element is updated only when this Print() function is called.
-	// They are calculated by given xCursor, yCursor and the built elem.Str.
-	elem.calculateCoordinates(elem.Str, xCursor, yCursor)
+	// They are calculated by given xCursor, yCursor and elem.Str.
+	elem.calculateCoordinates(xCursor, yCursor)
 	cursor.Print(elem.Str, elem.Colors)
 }
 
