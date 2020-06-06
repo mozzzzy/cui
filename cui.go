@@ -18,6 +18,7 @@ import (
 	"github.com/mozzzzy/cui/progressBar"
 	"github.com/mozzzzy/cui/secureInput"
 	"github.com/mozzzzy/cui/spinner"
+	"github.com/mozzzzy/cui/table"
 	"github.com/mozzzzy/cui/warnMessage"
 )
 
@@ -66,6 +67,10 @@ func Warn(msg string) {
 
 func Error(msg string) {
 	errorMessage.New(msg).Print()
+}
+
+func Table(data [][]string) {
+	table.New(data).Print()
 }
 
 func Spinner(msg string) *spinner.Spinner {
