@@ -234,7 +234,7 @@ func (checkbox Checkbox) GetEndY() int {
 	return checkbox.choicesElemChain.GetEndY()
 }
 
-func (checkbox *Checkbox) Ask() ([]string, bool) {
+func (checkbox *Checkbox) Ask() ([]int, bool) {
 	checkbox.Print()
 	inputHelper.SetRaw(true)
 	for {
@@ -280,7 +280,7 @@ func (checkbox *Checkbox) Ask() ([]string, bool) {
 			answers = append(answers, checkbox.choices[chosePosition])
 		}
 	}
-	return answers, checkbox.canceled
+	return checkbox.chosePositions, checkbox.canceled
 }
 
 func (checkbox *Checkbox) Print() {

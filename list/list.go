@@ -198,7 +198,7 @@ func (list List) GetEndY() int {
 	return list.choicesElemChain.GetEndY()
 }
 
-func (list *List) Ask() (string, bool) {
+func (list *List) Ask() (int, bool) {
 	inputHelper.SetRaw(true)
 	list.Print()
 	for {
@@ -231,9 +231,9 @@ func (list *List) Ask() (string, bool) {
 	}
 	inputHelper.SetRaw(false)
 	if list.finished {
-		return list.choices[list.pointerPosition], list.canceled
+		return list.pointerPosition, list.canceled
 	}
-	return "", list.canceled
+	return 0, list.canceled
 }
 
 func (list *List) Print() {

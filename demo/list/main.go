@@ -19,5 +19,5 @@ func main() {
 		return
 	}
 
-	cui.Info("Answer is " + answer + ".")
+	cui.Info("Answer is " + choices[answer] + ".")
 }

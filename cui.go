@@ -85,11 +85,11 @@ func ProgressBar(msg string) *progressBar.ProgressBar {
 	return pb
 }
 
-func List(question string, choices []string) (string, bool) {
+func List(question string, choices []string) (int, bool) {
 	return list.New(question, choices).Ask()
 }
 
-func Checkbox(question string, choices []string) ([]string, bool) {
+func Checkbox(question string, choices []string) ([]int, bool) {
 	return checkbox.New(question, choices).Ask()
 }
 

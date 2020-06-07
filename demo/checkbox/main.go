@@ -20,6 +20,6 @@ func main() {
 	}
 	cui.Info("Following choices are ckecked...")
 	for _, a := range answers {
-		cui.Info(a)
+		cui.Info(choices[a])
 	}
 }
