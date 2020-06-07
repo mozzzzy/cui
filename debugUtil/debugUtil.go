@@ -6,7 +6,7 @@ package debugUtil
 
 import (
 	"fmt"
-	"github.com/mozzzzy/cui/cursor"
+	"github.com/mozzzzy/cui/v2/cursor"
 )
 
 /*

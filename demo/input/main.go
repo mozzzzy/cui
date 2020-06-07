@@ -5,7 +5,7 @@ package main
  */
 
 import (
-	"github.com/mozzzzy/cui"
+	"github.com/mozzzzy/cui/v2"
 )
 
 /*

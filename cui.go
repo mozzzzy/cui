@@ -5,21 +5,21 @@ package cui
  */
 
 import (
-	"github.com/mozzzzy/cui/checkbox"
-	"github.com/mozzzzy/cui/confirmation"
-	"github.com/mozzzzy/cui/debugMessage"
-	"github.com/mozzzzy/cui/errorMessage"
-	"github.com/mozzzzy/cui/infoMessage"
-	"github.com/mozzzzy/cui/input"
-	"github.com/mozzzzy/cui/list"
-	"github.com/mozzzzy/cui/message"
-	"github.com/mozzzzy/cui/noticeMessage"
-	"github.com/mozzzzy/cui/prefixedMessage"
-	"github.com/mozzzzy/cui/progressBar"
-	"github.com/mozzzzy/cui/secureInput"
-	"github.com/mozzzzy/cui/spinner"
-	"github.com/mozzzzy/cui/table"
-	"github.com/mozzzzy/cui/warnMessage"
+	"github.com/mozzzzy/cui/v2/checkbox"
+	"github.com/mozzzzy/cui/v2/confirmation"
+	"github.com/mozzzzy/cui/v2/debugMessage"
+	"github.com/mozzzzy/cui/v2/errorMessage"
+	"github.com/mozzzzy/cui/v2/infoMessage"
+	"github.com/mozzzzy/cui/v2/input"
+	"github.com/mozzzzy/cui/v2/list"
+	"github.com/mozzzzy/cui/v2/message"
+	"github.com/mozzzzy/cui/v2/noticeMessage"
+	"github.com/mozzzzy/cui/v2/prefixedMessage"
+	"github.com/mozzzzy/cui/v2/progressBar"
+	"github.com/mozzzzy/cui/v2/secureInput"
+	"github.com/mozzzzy/cui/v2/spinner"
+	"github.com/mozzzzy/cui/v2/table"
+	"github.com/mozzzzy/cui/v2/warnMessage"
 )
 
 /*

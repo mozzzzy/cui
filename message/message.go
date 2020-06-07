@@ -5,8 +5,8 @@ package message
  */
 
 import (
-	"github.com/mozzzzy/cui/constants"
-	"github.com/mozzzzy/cui/element"
+	"github.com/mozzzzy/cui/v2/constants"
+	"github.com/mozzzzy/cui/v2/element"
 )
 
 /*

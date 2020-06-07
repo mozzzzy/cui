@@ -5,12 +5,12 @@ package checkbox
  */
 
 import (
-	"github.com/mozzzzy/cui/color"
-	"github.com/mozzzzy/cui/constants"
-	"github.com/mozzzzy/cui/cursor"
-	"github.com/mozzzzy/cui/element"
-	"github.com/mozzzzy/cui/elementChain"
-	"github.com/mozzzzy/cui/inputHelper"
+	"github.com/mozzzzy/cui/v2/color"
+	"github.com/mozzzzy/cui/v2/constants"
+	"github.com/mozzzzy/cui/v2/cursor"
+	"github.com/mozzzzy/cui/v2/element"
+	"github.com/mozzzzy/cui/v2/elementChain"
+	"github.com/mozzzzy/cui/v2/inputHelper"
 )
 
 /*

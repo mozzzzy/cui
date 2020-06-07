@@ -2,7 +2,7 @@ package main
 
 import (
 	"time"
-	"github.com/mozzzzy/cui"
+	"github.com/mozzzzy/cui/v2"
 )
 
 func main() {

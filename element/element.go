@@ -7,7 +7,7 @@ package element
 import (
 	"strings"
 
-	"github.com/mozzzzy/cui/cursor"
+	"github.com/mozzzzy/cui/v2/cursor"
 )
 
 /*

@@ -3,12 +3,12 @@ package main
 import (
 	"time"
 
-	"github.com/mozzzzy/cui"
-	"github.com/mozzzzy/cui/color"
+	"github.com/mozzzzy/cui/v2"
+	"github.com/mozzzzy/cui/v2/color"
 )
 
 func main() {
-	answers, canceled := cui.Checkbox("Which demonstration do you run?", []string{
+	choices := []string{
 		"message",
 		"debug",
 		"info",
@@ -21,7 +21,8 @@ func main() {
 		"list",
 		"progressBar",
 		"spinner",
-	})
+	}
+	answers, canceled := cui.Checkbox("Which demonstration do you run?", choices)
 
 	if canceled {
 		cui.Warn("Canceled")
@@ -30,33 +31,33 @@ func main() {
 
 	for _, a := range answers {
 		switch a {
-		case "message":
+		case 0:
 			cui.Message("This is test message!!", []string{color.BlueFg, color.Bold})
-		case "debug":
+		case 1:
 			cui.Debug("This is debug message!!")
-		case "info":
+		case 2:
 			cui.Info("This is info message!!")
-		case "notice":
+		case 3:
 			cui.Notice("This is notice message!!")
-		case "warn":
+		case 4:
 			cui.Warn("This is warning message!!")
-		case "error":
+		case 5:
 			cui.Error("This is error message!!")
-		case "input":
+		case 6:
 			answer, canceled := cui.Input("Please type something and press Enter")
 			if canceled {
 				cui.Warn("Canceled")
 				return
 			}
 			cui.Info("Answer: \"" + answer + "\"")
-		case "secureInput":
+		case 7:
 			answer, canceled := cui.SecureInput("Please type something and press Enter")
 			if canceled {
 				cui.Warn("Canceled")
 				return
 			}
 			cui.Info("Answer: \"" + answer + "\"")
-		case "confirmation":
+		case 8:
 			answer, canceled := cui.Confirmation("Please type Y or n and press Enter")
 			if canceled {
 				cui.Warn("Canceled")
@@ -67,14 +68,15 @@ func main() {
 			} else {
 				cui.Warn("Rejected.")
 			}
-		case "list":
-			answer, canceled := cui.List("Which operation system do you like?", []string{"Windows", "Linux", "MacOS"})
+		case 9:
+			osNames := []string{"Windows", "Linux", "MacOS"}
+			answer, canceled := cui.List("Which operation system do you like?", osNames)
 			if canceled {
 				cui.Warn("Canceled")
 				return
 			}
-			cui.Info("Answer: \"" + answer + "\"")
-		case "progressBar":
+			cui.Info("Answer: \"" + osNames[answer] + "\"")
+		case 10:
 			pb0 := cui.ProgressBar("Waiting some operations... (success case)")
 			for i := 1; i <= 100; i++ {
 				time.Sleep(100 * time.Millisecond)
@@ -86,7 +88,7 @@ func main() {
 				pb1.ReportProgress(i)
 			}
 			pb1.Failure()
-		case "spinner":
+		case 11:
 			spnr0 := cui.Spinner("Waiting some operations... (success case)")
 			time.Sleep(3 * time.Second)
 			spnr0.Complete()

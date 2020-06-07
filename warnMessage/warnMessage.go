@@ -5,9 +5,9 @@ package warnMessage
  */
 
 import (
-	"github.com/mozzzzy/cui/color"
-	"github.com/mozzzzy/cui/constants"
-	"github.com/mozzzzy/cui/prefixedMessage"
+	"github.com/mozzzzy/cui/v2/color"
+	"github.com/mozzzzy/cui/v2/constants"
+	"github.com/mozzzzy/cui/v2/prefixedMessage"
 )
 
 /*

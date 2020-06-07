@@ -7,10 +7,10 @@ package table
 import (
 	"strings"
 
-	"github.com/mozzzzy/cui/color"
-	"github.com/mozzzzy/cui/constants"
-	"github.com/mozzzzy/cui/element"
-	"github.com/mozzzzy/cui/elementChain"
+	"github.com/mozzzzy/cui/v2/color"
+	"github.com/mozzzzy/cui/v2/constants"
+	"github.com/mozzzzy/cui/v2/element"
+	"github.com/mozzzzy/cui/v2/elementChain"
 )
 
 /*

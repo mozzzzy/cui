@@ -5,8 +5,8 @@ package elementChain
  */
 
 import (
-	"github.com/mozzzzy/cui/cursor"
-	"github.com/mozzzzy/cui/element"
+	"github.com/mozzzzy/cui/v2/cursor"
+	"github.com/mozzzzy/cui/v2/element"
 )
 
 /*

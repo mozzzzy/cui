@@ -7,7 +7,7 @@ package cursor
 import (
 	"fmt"
 	"strings"
-	"github.com/mozzzzy/cui/color"
+	"github.com/mozzzzy/cui/v2/color"
 )
 
 /*
