@@ -32,11 +32,11 @@ type Checkbox struct {
  */
 
 var (
-	ChosePrefix       string   = "⬢"
+	ChosePrefix       string   = "[x]"
 	ChosePrefixColors []string = []string{color.CyanFg}
 	ChoseColors       []string = []string{}
 
-	NoChosePrefix       string = "⬡"
+	NoChosePrefix       string = "[ ]"
 	NoChosePrefixColors []string
 	NoChoseColors       []string = []string{}
 
@@ -244,7 +244,10 @@ func (checkbox *Checkbox) Ask() ([]int, bool) {
 			break
 		}
 		// Get keyboard input
+		inputHelper.SetNoEcho(true);
 		inputRunes := inputHelper.Getch()
+		inputHelper.SetNoEcho(false);
+
 		switch string(inputRunes) {
 		case constants.UpArrow: // up arrow
 			fallthrough

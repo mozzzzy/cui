@@ -208,7 +208,10 @@ func (list *List) Ask() (int, bool) {
 			break
 		}
 		// Get keyboard input
+		inputHelper.SetNoEcho(true);
 		inputRunes := inputHelper.Getch()
+		inputHelper.SetNoEcho(false);
+
 		switch string(inputRunes) {
 		case constants.UpArrow: // up arrow
 			fallthrough

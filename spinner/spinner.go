@@ -31,7 +31,7 @@ type Spinner struct {
  */
 
 var (
-	Spins      []string = []string{"⠙", "⠸", "⠴", "⠦", "⠇", "⠋"}
+	Spins      []string = []string{"/", "-", "\\", "|", "/", "-", "\\", "|"}
 	SpinColors []string = []string{color.CyanFg, color.Bold}
 
 	StrColors []string

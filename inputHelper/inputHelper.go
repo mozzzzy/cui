@@ -42,6 +42,22 @@ func SetRaw(start bool) error {
 	return cmd.Wait()
 }
 
+func SetNoEcho(start bool) error {
+	opt := "-echo"
+	if !start {
+		opt = "echo"
+	}
+
+	cmd := exec.Command("stty", opt)
+	cmd.Stdin = os.Stdin
+
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return cmd.Wait()
+}
+
 func Getch() []rune {
 	var runes []rune
 	input := bufio.NewReader(os.Stdin)
