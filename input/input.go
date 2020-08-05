@@ -201,7 +201,9 @@ func (input *Input) Ask() (string, bool) {
 		}
 		cursor.MoveCursorTo(xCursorShelter, yCursorShelter)
 		// Get keyboard input
+		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
+		inputHelper.SetNoEcho(false)
 		switch string(inputRunes) {
 		case constants.Delete: // delete
 			input.removeRune()

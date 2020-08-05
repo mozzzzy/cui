@@ -216,7 +216,9 @@ func (secureInput *SecureInput) Ask() (string, bool) {
 		}
 		cursor.MoveCursorTo(xCursorShelter, yCursorShelter)
 		// Get keyboard secureInput
+		inputHelper.SetNoEcho(true)
 		secureInputRunes := inputHelper.Getch()
+		inputHelper.SetNoEcho(false)
 		switch string(secureInputRunes) {
 		case constants.Delete: // delete
 			secureInput.removeRune()

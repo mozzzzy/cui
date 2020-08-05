@@ -185,7 +185,9 @@ func (confirm *Confirmation) Ask() (bool, bool) {
 		if confirm.finished || confirm.canceled {
 			break
 		}
+		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
+		inputHelper.SetNoEcho(false)
 		switch string(inputRunes) {
 		case AnswerYes:
 			confirm.answer = true
