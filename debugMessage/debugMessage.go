@@ -5,9 +5,9 @@ package debugMessage
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/prefixedMessage"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/prefixedMessage"
 )
 
 /*
@@ -51,6 +51,10 @@ func New(str string) *DebugMessage {
 /*
  * Public Methods
  */
+
+func (msg DebugMessage) Erase() {
+	msg.pMsg.Erase()
+}
 
 func (msg DebugMessage) GetMinX() int {
 	return msg.pMsg.GetMinX()

@@ -5,8 +5,8 @@ package message
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/element"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/element"
 )
 
 /*
@@ -44,6 +44,10 @@ func New(str string, colors []string) *Message {
 /*
  * Public Methods
  */
+
+func (msg Message) Erase() {
+	msg.msgElem.Erase()
+}
 
 func (msg Message) GetMinX() int {
 	return msg.msgElem.GetMinX()

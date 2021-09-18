@@ -5,11 +5,11 @@ package confirmation
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
-	"github.com/mozzzzy/cui/v2/inputHelper"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
+	"github.com/mozzzzy/cui/v3/core/inputHelper"
 )
 
 /*
@@ -27,10 +27,10 @@ type Confirmation struct {
  * Constants and Package Scope Variables
  */
 
-var (
+const (
 	QuestionSuffix  string = ": "
-	AnswerYes       string = "Y"
-	AnswerNo        string = "n"
+	AnswerYes       string = "y"
+	AnswerNo        string = "N"
 	AnswerSeparator string = "/"
 )
 
@@ -102,46 +102,66 @@ func New(question string) *Confirmation {
  * Private Methods
  */
 
+func (confirm Confirmation) getAnswerElemPtr() *element.Element {
+	return &(confirm.elemChain.Elems[4])
+}
+
+func (confirm Confirmation) getSuffixElemPtr() *element.Element {
+	return &(confirm.elemChain.Elems[5])
+}
+
+func (confirm Confirmation) getTmpInputElemPtr() *element.Element {
+	return &(confirm.elemChain.Elems[6])
+}
+
+func (confirm *Confirmation) print() {
+	confirm.elemChain.Print()
+}
+
 func (confirm *Confirmation) setAnswerElem() {
 	if confirm.finished {
 		// Set Answer
 		if confirm.answer {
-			confirm.elemChain.Elems[4].Str = AnswerYes
+			confirm.getAnswerElemPtr().Str = AnswerYes
 		} else {
-			confirm.elemChain.Elems[4].Str = AnswerNo
+			confirm.getAnswerElemPtr().Str = AnswerNo
 		}
-		confirm.elemChain.Elems[4].Colors = constants.AnswerColors
+		confirm.getAnswerElemPtr().Colors = constants.AnswerColors
 
 		// Set Next Line
-		confirm.elemChain.Elems[5].Str = constants.NewLine
+		confirm.getSuffixElemPtr().Str = constants.NewLine
 
 		// Unset temporary answer
-		confirm.unsetAnswerElem()
+		confirm.unsetTmpInputElem()
 		return
 	}
 
 	if confirm.canceled {
 		// Set Next Line
-		confirm.elemChain.Elems[5].Str = constants.NewLine
+		confirm.getSuffixElemPtr().Str = constants.NewLine
 		// Unset temporary answer
-		confirm.unsetAnswerElem()
+		confirm.unsetTmpInputElem()
 		return
 	}
 
 	if confirm.answer {
-		confirm.elemChain.Elems[6].Str = AnswerYes
+		confirm.getTmpInputElemPtr().Str = AnswerYes
 	} else {
-		confirm.elemChain.Elems[6].Str = AnswerNo
+		confirm.getTmpInputElemPtr().Str = AnswerNo
 	}
 }
 
-func (confirm *Confirmation) unsetAnswerElem() {
-	confirm.elemChain.Elems[6].Str = ""
+func (confirm *Confirmation) unsetTmpInputElem() {
+	confirm.getTmpInputElemPtr().Str = ""
 }
 
 /*
  * Public Methods
  */
+
+func (confirm Confirmation) Erase() {
+	confirm.elemChain.Erase()
+}
 
 func (confirm Confirmation) GetMinX() int {
 	return confirm.elemChain.GetMinX()
@@ -176,18 +196,22 @@ func (confirm Confirmation) GetEndY() int {
 }
 
 func (confirm *Confirmation) Ask() (bool, bool) {
-	confirm.Print()
-	inputHelper.SetRaw(true)
+	confirm.print()
 	for {
-		confirm.elemChain.Erase()
 		cursor.MoveCursorTo(confirm.GetStartX(), confirm.GetStartY())
-		confirm.Print()
+		confirm.print()
 		if confirm.finished || confirm.canceled {
 			break
 		}
+
+		inputHelper.SetRaw(true)
 		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
 		inputHelper.SetNoEcho(false)
+		inputHelper.SetRaw(false)
+
+		confirm.Erase()
+
 		switch string(inputRunes) {
 		case AnswerYes:
 			confirm.answer = true
@@ -196,7 +220,7 @@ func (confirm *Confirmation) Ask() (bool, bool) {
 			confirm.answer = false
 			confirm.setAnswerElem()
 		case constants.Delete: // delete
-			confirm.unsetAnswerElem()
+			confirm.unsetTmpInputElem()
 		case constants.Enter: // enter
 			confirm.finished = true
 			confirm.setAnswerElem()
@@ -205,10 +229,5 @@ func (confirm *Confirmation) Ask() (bool, bool) {
 			confirm.setAnswerElem()
 		}
 	}
-	inputHelper.SetRaw(false)
 	return confirm.answer, confirm.canceled
-}
-
-func (confirm *Confirmation) Print() {
-	confirm.elemChain.Print()
 }

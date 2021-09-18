@@ -5,11 +5,11 @@ package input
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
-	"github.com/mozzzzy/cui/v2/inputHelper"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
+	"github.com/mozzzzy/cui/v3/core/inputHelper"
 )
 
 /*
@@ -17,9 +17,10 @@ import (
  */
 
 type Input struct {
-	elemChain elementChain.ElementChain
-	canceled  bool
-	finished  bool
+	elemChain    elementChain.ElementChain
+	inputPointer int
+	canceled     bool
+	finished     bool
 }
 
 /*
@@ -86,75 +87,86 @@ func New(question string) *Input {
  */
 
 func (input *Input) appendRunes(r []rune) {
-	xCursor, _ := cursor.GetCursor()
-	position := input.getAppendPosition(xCursor)
-	oldAnswer := input.getAnswerElem().Str
-	newAnswer :=
-		string([]rune(oldAnswer)[:position]) +
-			string(r) +
-			string([]rune(oldAnswer)[position:])
-	input.getAnswerElem().Str = newAnswer
+	oldAnswer := input.getAnswerElemPtr().Str
+
+	oldAnswerFront := string([]rune(oldAnswer)[:input.inputPointer])
+	oldAnswerRear := string([]rune(oldAnswer)[input.inputPointer:])
+
+	newAnswer := oldAnswerFront + string(r) + oldAnswerRear
+	input.getAnswerElemPtr().Str = newAnswer
+	input.inputPointer += len(r)
 }
 
-func (input Input) getAnswerElem() *element.Element {
+func (input Input) getPrefixElemPtr() *element.Element {
+	return &input.elemChain.Elems[0]
+}
+
+func (input Input) getPaddingElemPtr() *element.Element {
+	return &input.elemChain.Elems[1]
+}
+
+func (input Input) getQuestionElemPtr() *element.Element {
+	return &input.elemChain.Elems[2]
+}
+
+func (input Input) getQuestionSuffixElemPtr() *element.Element {
+	return &input.elemChain.Elems[3]
+}
+
+func (input Input) getAnswerElemPtr() *element.Element {
 	return &input.elemChain.Elems[4]
 }
 
-func (input Input) getAnswerStart() (answerStart int) {
-	for i := 0; i < 4; i++ {
-		answerStart += len(input.elemChain.Elems[i].Str)
-	}
+func (input Input) getNextLineElemPtr() *element.Element {
+	return &input.elemChain.Elems[5]
+}
+
+func (input Input) getAnswerStartX() (answerStartX int) {
+	answerStartX += input.GetStartX()
+	answerStartX += len(input.getPrefixElemPtr().Str)
+	answerStartX += len(input.getPaddingElemPtr().Str)
+	answerStartX += len(input.getQuestionElemPtr().Str)
+	answerStartX += len(input.getQuestionSuffixElemPtr().Str)
 	return
 }
 
-func (input Input) getAnswerEnd() (answerEnd int) {
-	for i := 0; i < 5; i++ {
-		answerEnd += len(input.elemChain.Elems[i].Str)
-	}
+func (input Input) getAnswerEndX() (answerEndX int) {
+	answerEndX += input.getAnswerStartX()
+	answerEndX += len(input.getAnswerElemPtr().Str)
 	return
 }
 
-func (input Input) getAppendPosition(xCursor int) (position int) {
-	answerStart := input.getAnswerStart()
-	/*
-	 * startX                                            cursorX
-	 * |                                                 |
-	 * v                                                 v
-	 * +--------+---------+----------+----------------+--------+------+
-	 * | Prefix | Padding | Question | QuestionSuffix | Answer | \r\n |
-	 * +--------+---------+----------+----------------+--------+------+
-	 *                                                ^
-	 *                                                |
-	 *                                                answerStart
-	 */
-	position = xCursor - answerStart
-	return
+func (input *Input) finalizeAnswer() {
+	input.getAnswerElemPtr().Colors = constants.AnswerColors
+	input.getNextLineElemPtr().Str = constants.NewLine
 }
 
-func (input *Input) fixAnswer() {
-	input.getAnswerElem().Colors = constants.AnswerColors
-	input.elemChain.Elems[len(input.elemChain.Elems)-1].Str = constants.NewLine
+func (input *Input) print() {
+	input.elemChain.Print()
 }
 
 func (input *Input) removeRune() {
-	xCursor, _ := cursor.GetCursor()
-	position := input.getAppendPosition(xCursor)
-	oldAnswer := input.getAnswerElem().Str
+	oldAnswer := input.getAnswerElemPtr().Str
 
 	if len(oldAnswer) == 0 {
 		return
 	}
 
-	newAnswer := string([]rune(oldAnswer)[:position-1])
-	if position < len(oldAnswer)-1 {
-		newAnswer += string([]rune(oldAnswer)[position:])
+	newAnswer := string([]rune(oldAnswer)[:input.inputPointer-1])
+	if input.inputPointer < len(oldAnswer)-1 {
+		newAnswer += string([]rune(oldAnswer)[input.inputPointer:])
 	}
-	input.getAnswerElem().Str = newAnswer
+	input.getAnswerElemPtr().Str = newAnswer
+	input.inputPointer--
 }
 
 /*
  * Public Methods
  */
+
+func (input Input) Erase() {
+	input.elemChain.Erase()
+}
 
 func (input Input) GetMinX() int {
 	return input.elemChain.GetMinX()
@@ -189,56 +201,44 @@ func (input Input) GetEndY() int {
 }
 
 func (input *Input) Ask() (string, bool) {
-	input.Print()
-	xCursorShelter, yCursorShelter := cursor.GetCursor()
-	inputHelper.SetRaw(true)
+	input.print()
 	for {
-		input.elemChain.Erase()
 		cursor.MoveCursorTo(input.GetStartX(), input.GetStartY())
-		input.Print()
+		input.print()
 		if input.finished || input.canceled {
 			break
 		}
-		cursor.MoveCursorTo(xCursorShelter, yCursorShelter)
+		cursor.MoveCursorTo(input.getAnswerStartX() + input.inputPointer, input.GetStartY())
+
 		// Get keyboard input
+		inputHelper.SetRaw(true)
 		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
 		inputHelper.SetNoEcho(false)
+		inputHelper.SetRaw(false)
+
+		input.Erase()
+
 		switch string(inputRunes) {
 		case constants.Delete: // delete
 			input.removeRune()
-			answerStartX := input.getAnswerStart()
-			if answerStartX < xCursorShelter {
-				xCursorShelter--
-			}
 		case constants.Enter: // enter
 			input.finished = true
-			input.fixAnswer()
+			input.finalizeAnswer()
 		case constants.CtrlC: // ctrl + c
 			input.canceled = true
-			input.fixAnswer()
+			input.finalizeAnswer()
 		case constants.RightArrow: // right arrow
-			answerEndX := input.getAnswerEnd()
-			if answerEndX > xCursorShelter {
-				xCursorShelter++
+			if len(input.getAnswerElemPtr().Str) > input.inputPointer {
+				input.inputPointer++
 			}
 		case constants.LeftArrow: // left arrow
-			answerStartX := input.getAnswerStart()
-			if answerStartX < xCursorShelter {
-				xCursorShelter--
+			if 0 < input.inputPointer {
+				input.inputPointer--
 			}
 		default:
 			input.appendRunes(inputRunes)
-			answerEndX := input.getAnswerEnd()
-			if answerEndX > xCursorShelter {
-				xCursorShelter++
-			}
 		}
 	}
-	inputHelper.SetRaw(false)
-	return input.getAnswerElem().Str, input.canceled
-}
-
-func (input *Input) Print() {
-	input.elemChain.Print()
+	return input.getAnswerElemPtr().Str, input.canceled
 }

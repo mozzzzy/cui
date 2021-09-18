@@ -5,12 +5,12 @@ package checkbox
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
-	"github.com/mozzzzy/cui/v2/inputHelper"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
+	"github.com/mozzzzy/cui/v3/core/inputHelper"
 )
 
 /*
@@ -48,9 +48,9 @@ var (
  * Private Functions
  */
 
-func erase(slc []int, target int) []int {
+func removeTargetFromSlice(src []int, target int) []int {
 	newSlice := []int{}
-	for _, e := range slc {
+	for _, e := range src {
 		if e == target {
 			continue
 		}
@@ -59,8 +59,8 @@ func erase(slc []int, target int) []int {
 	return newSlice
 }
 
-func contains(slc []int, target int) bool {
-	for _, i := range slc {
+func contains(src []int, target int) bool {
+	for _, i := range src {
 		if i == target {
 			return true
 		}
@@ -77,19 +77,23 @@ func New(question string, choices []string) *Checkbox {
 	 * checkbox is following format.
 	 * +--------+---------+------------+---------+--------+------+
 	 * | Prefix | Padding | Question   | Padding | Answer | \r\n |
-	 * +--------+----+----+----+-------+-+------++--------+------+
-	 * |ChosePrefix  | Padding | Choice0 | \r\n |
-	 * +-------------+---------+---------+------+
-	 * |NoChosePrefix| Padding | Choice1 | \r\n |
-	 * +-------------+---------+---------+------+
-	 * |NoChosePrefix| Padding | Choice2 | \r\n |
-	 * +-------------+---------+---------+------+
-	 * |NoChosePrefix| Padding | Choice3 | \r\n |
-	 * +-------------+---------+---------+------+
+	 * +--------+----+----+----+-------+--+------+--------+------+
+	 * |ChosePrefix  | Padding | Choice 0 | \r\n |
+	 * +-------------+---------+----------+------+
+	 * |NoChosePrefix| Padding | Choice 1 | \r\n |
+	 * +-------------+---------+----------+------+
+	 * |NoChosePrefix| Padding | Choice 2 | \r\n |
+	 * +-------------+---------+----------+------+
+	 * |NoChosePrefix| Padding | Choice 3 | \r\n |
+	 * +-------------+---------+----------+------+
 	 */
 
 	// Create first line's ElemChain
-	elemsFirstLine := []element.Element{
+	// +--------+---------+------------+---------+--------+------+
+	// | Prefix | Padding | Question   | Padding | Answer | \r\n |
+	// +--------+----+----+----+-------+--+------+--------+------+
+	//
+	firstLineElems := []element.Element{
 		// Prefix
 		{
 			Str:    constants.QuestionPrefix,
@@ -121,9 +125,19 @@ func New(question string, choices []string) *Checkbox {
 			Colors: []string{},
 		},
 	}
-	firstLineElemChain := elementChain.New(elemsFirstLine)
+	firstLineElemChain := elementChain.New(firstLineElems)
 
 	// Create choices ElemChain
+	// +-------------+---------+----------+------+
+	// |ChosePrefix  | Padding | Choice 0 | \r\n |
+	// +-------------+---------+----------+------+
+	// |NoChosePrefix| Padding | Choice 1 | \r\n |
+	// +-------------+---------+----------+------+
+	// |NoChosePrefix| Padding | Choice 2 | \r\n |
+	// +-------------+---------+----------+------+
+	// |NoChosePrefix| Padding | Choice 3 | \r\n |
+	// +-------------+---------+----------+------+
+	//
 	choicesElemChain := elementChain.New([]element.Element{})
 	initialPointerPosition := 0
 	for _, choice := range choices {
@@ -134,7 +148,7 @@ func New(question string, choices []string) *Checkbox {
 		// Choice
 		elemChoice := element.New(choice, NoChoseColors)
 		// Next line
-		elemNextLine := element.New("\r\n", []string{})
+		elemNextLine := element.New(constants.NewLine, []string{})
 
 		choicesElemChain.Elems = append(choicesElemChain.Elems, *elemNoChosePrefix)
 		choicesElemChain.Elems = append(choicesElemChain.Elems, *elemPadding)
@@ -148,7 +162,7 @@ func New(question string, choices []string) *Checkbox {
 		choices:            choices,
 	}
 
-	checkbox.MovePointerTo(initialPointerPosition)
+	checkbox.movePointerTo(initialPointerPosition)
 	return &checkbox
 }
 
@@ -156,22 +170,101 @@ func New(question string, choices []string) *Checkbox {
  * Private Methods
  */
 
+func (checkbox *Checkbox) choose(choiceIndex int) {
+	// Update chosePositions
+	checkbox.chosePositions = append(checkbox.chosePositions, choiceIndex)
+	// Update elems
+	checkbox.updateElems()
+}
+
+func (checkbox *Checkbox) decrementPointer() {
+	checkbox.movePointerTo(checkbox.pointerPosition - 1)
+}
+
+func (checkbox *Checkbox) incrementPointer() {
+	checkbox.movePointerTo(checkbox.pointerPosition + 1)
+}
+
+func (checkbox *Checkbox) movePointerTo(pointerPosition int) {
+	// Update pointer position
+	checkbox.pointerPosition = pointerPosition
+	// Update elems
+	checkbox.updateElems()
+}
+
+func (checkbox *Checkbox) print() {
+	checkbox.firstLineElemChain.Print()
+	if !checkbox.finished && !checkbox.canceled {
+		checkbox.choicesElemChain.Print()
+	} else {
+		checkbox.choicesElemChain.Erase()
+	}
+}
+
+func (checkbox *Checkbox) setAnswerElem() {
+	answers := constants.OpenParenthesis
+	for i, chosePosition := range checkbox.chosePositions {
+		answers += checkbox.choices[chosePosition]
+		if i != len(checkbox.chosePositions)-1 {
+			answers += AnswerSeparator
+		}
+	}
+	if len(checkbox.chosePositions) == 0 {
+		answers += AnswerNone
+	}
+	answers += constants.CloseParenthesis
+
+	checkbox.firstLineElemChain.Elems[4].Str = answers
+}
+
+func (checkbox *Checkbox) unChoose(choiceIndex int) {
+	// Update chosePositions
+	checkbox.chosePositions = removeTargetFromSlice(checkbox.chosePositions, choiceIndex)
+	// Update elems
+	checkbox.updateElems()
+}
+
+func (checkbox *Checkbox) updateElems() {
+	if checkbox.finished {
+		checkbox.setAnswerElem()
+		return
+	}
+	// Set chose / unset prefix and colors
+	for i := 0; i < len(checkbox.choicesElemChain.Elems); i += 4 {
+		// Convert element index to choice index
+		choiceIndex := i / 4
+		if contains(checkbox.chosePositions, choiceIndex) { // If chose
+			// Prefix
+			checkbox.choicesElemChain.Elems[i].Str = ChosePrefix
+			checkbox.choicesElemChain.Elems[i].Colors = ChosePrefixColors
+			// Choice
+			checkbox.choicesElemChain.Elems[i+2].Colors = ChoseColors
+		} else { // is not chose
+			// Prefix
+			checkbox.choicesElemChain.Elems[i].Str = NoChosePrefix
+			checkbox.choicesElemChain.Elems[i].Colors = NoChosePrefixColors
+			// Choice
+			checkbox.choicesElemChain.Elems[i+2].Colors = NoChoseColors
+		}
+	}
+	// Set pointer color
+	pointerElemStart := checkbox.pointerPosition * 4
+	checkbox.choicesElemChain.Elems[pointerElemStart].Colors =
+		constants.PointerColors
+	checkbox.choicesElemChain.Elems[pointerElemStart+2].Colors =
+		constants.PointerColors
+}
+
 /*
  * Public Methods
  */
 
-func (checkbox *Checkbox) Choose(choiceIndex int) {
-	// Update chosePositions
-	checkbox.chosePositions = append(checkbox.chosePositions, choiceIndex)
-	// Update elems
-	checkbox.UpdateElems()
-}
-
-func (checkbox *Checkbox) UnChoose(choiceIndex int) {
-	// Update chosePositions
-	checkbox.chosePositions = erase(checkbox.chosePositions, choiceIndex)
-	// Update elems
-	checkbox.UpdateElems()
+func (checkbox Checkbox) Erase() {
+	checkbox.firstLineElemChain.Erase()
+	if checkbox.finished || checkbox.canceled {
+		return
+	}
+	checkbox.choicesElemChain.Erase()
 }
 
 func (checkbox Checkbox) GetMinX() int {
@@ -235,27 +328,27 @@ func (checkbox Checkbox) GetEndY() int {
 }
 
 func (checkbox *Checkbox) Ask() ([]int, bool) {
-	checkbox.Print()
+	checkbox.print()
 	inputHelper.SetRaw(true)
 	for {
 		cursor.MoveCursorTo(checkbox.GetStartX(), checkbox.GetStartY())
-		checkbox.Print()
+		checkbox.print()
 		if checkbox.finished || checkbox.canceled {
 			break
 		}
 		// Get keyboard input
-		inputHelper.SetNoEcho(true);
+		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
-		inputHelper.SetNoEcho(false);
+		inputHelper.SetNoEcho(false)
 
 		switch string(inputRunes) {
-		case constants.UpArrow: // up arrow
+		case constants.UpArrow: // up arrow key
 			fallthrough
 		case "k": // up
 			if checkbox.pointerPosition > 0 {
-				checkbox.DecrementPointer()
+				checkbox.decrementPointer()
 			}
-		case constants.DownArrow: // down arrow
+		case constants.DownArrow: // down arrow key
 			fallthrough
 		case "j": // down
 			if checkbox.pointerPosition < len(checkbox.choices)-1 {
@@ -263,13 +356,13 @@ func (checkbox *Checkbox) Ask() ([]int, bool) {
 			}
 		case constants.Enter: // enter
 			checkbox.finished = true
-			checkbox.UpdateElems()
+			checkbox.updateElems()
 		case " ": // space
-			// update chose / no chose
+			// update chose <-> no chose
 			if contains(checkbox.chosePositions, checkbox.pointerPosition) {
-				checkbox.UnChoose(checkbox.pointerPosition)
+				checkbox.unChoose(checkbox.pointerPosition)
 			} else {
-				checkbox.Choose(checkbox.pointerPosition)
+				checkbox.choose(checkbox.pointerPosition)
 			}
 		case constants.CtrlC: // ctrl + c
 			checkbox.canceled = true
@@ -284,77 +377,4 @@ func (checkbox *Checkbox) Ask() ([]int, bool) {
 		}
 	}
 	return checkbox.chosePositions, checkbox.canceled
-}
-
-func (checkbox *Checkbox) Print() {
-	checkbox.firstLineElemChain.Print()
-	if !checkbox.finished {
-		checkbox.choicesElemChain.Print()
-	} else {
-		checkbox.choicesElemChain.Erase()
-		cursor.MoveCursorTo(
-			checkbox.firstLineElemChain.GetEndX(), checkbox.firstLineElemChain.GetEndY())
-	}
-}
-
-func (checkbox *Checkbox) SetAnswerElem() {
-	answers := constants.OpenParenthesis
-	for i, chosePosition := range checkbox.chosePositions {
-		answers += checkbox.choices[chosePosition]
-		if i != len(checkbox.chosePositions)-1 {
-			answers += AnswerSeparator
-		}
-	}
-	if len(checkbox.chosePositions) == 0 {
-		answers += AnswerNone
-	}
-	answers += constants.CloseParenthesis
-
-	checkbox.firstLineElemChain.Elems[4].Str = answers
-}
-
-func (checkbox *Checkbox) MovePointerTo(pointerPosition int) {
-	// Update pointer position
-	checkbox.pointerPosition = pointerPosition
-	// Update elems
-	checkbox.UpdateElems()
-}
-
-func (checkbox *Checkbox) UpdateElems() {
-	if checkbox.finished {
-		checkbox.SetAnswerElem()
-		return
-	}
-	// Set chose / unset prefix and colors
-	for i := 0; i < len(checkbox.choicesElemChain.Elems); i += 4 {
-		// Convert element index to choice index
-		choiceIndex := i / 4
-		if contains(checkbox.chosePositions, choiceIndex) { // If chose
-			// Prefix
-			checkbox.choicesElemChain.Elems[i].Str = ChosePrefix
-			checkbox.choicesElemChain.Elems[i].Colors = ChosePrefixColors
-			// Choice
-			checkbox.choicesElemChain.Elems[i+2].Colors = ChoseColors
-		} else { // is not chose
-			// Prefix
-			checkbox.choicesElemChain.Elems[i].Str = NoChosePrefix
-			checkbox.choicesElemChain.Elems[i].Colors = NoChosePrefixColors
-			// Choice
-			checkbox.choicesElemChain.Elems[i+2].Colors = NoChoseColors
-		}
-	}
-	// Set pointer color
-	pointerElemStart := checkbox.pointerPosition * 4
-	checkbox.choicesElemChain.Elems[pointerElemStart].Colors =
-		constants.PointerColors
-	checkbox.choicesElemChain.Elems[pointerElemStart+2].Colors =
-		constants.PointerColors
-}
-
-func (checkbox *Checkbox) DecrementPointer() {
-	checkbox.MovePointerTo(checkbox.pointerPosition - 1)
-}
-
-func (checkbox *Checkbox) incrementPointer() {
-	checkbox.MovePointerTo(checkbox.pointerPosition + 1)
 }

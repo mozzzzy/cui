@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/prefixedMessage"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/prefixedMessage"
 )
 
 /*
@@ -63,35 +63,44 @@ func New(str string) *Spinner {
  * Public Methods
  */
 
-func (spnr Spinner) GetMinX() int {
+func (spnr *Spinner) Erase() {
+	if !spnr.finished {
+		return
+	}
+	spnr.serializeMutex.Lock()
+	spnr.pMsg.Erase()
+	spnr.serializeMutex.Unlock()
+}
+
+func (spnr *Spinner) GetMinX() int {
 	return spnr.pMsg.GetMinX()
 }
 
-func (spnr Spinner) GetMinY() int {
+func (spnr *Spinner) GetMinY() int {
 	return spnr.pMsg.GetMinY()
 }
 
-func (spnr Spinner) GetMaxX() int {
+func (spnr *Spinner) GetMaxX() int {
 	return spnr.pMsg.GetMaxX()
 }
 
-func (spnr Spinner) GetMaxY() int {
+func (spnr *Spinner) GetMaxY() int {
 	return spnr.pMsg.GetMaxY()
 }
 
-func (spnr Spinner) GetStartX() int {
+func (spnr *Spinner) GetStartX() int {
 	return spnr.pMsg.GetStartX()
 }
 
-func (spnr Spinner) GetStartY() int {
+func (spnr *Spinner) GetStartY() int {
 	return spnr.pMsg.GetStartY()
 }
 
-func (spnr Spinner) GetEndX() int {
+func (spnr *Spinner) GetEndX() int {
 	return spnr.pMsg.GetEndX()
 }
 
-func (spnr Spinner) GetEndY() int {
+func (spnr *Spinner) GetEndY() int {
 	return spnr.pMsg.GetEndY()
 }
 

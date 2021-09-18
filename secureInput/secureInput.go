@@ -5,11 +5,11 @@ package secureInput
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
-	"github.com/mozzzzy/cui/v2/inputHelper"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
+	"github.com/mozzzzy/cui/v3/core/inputHelper"
 )
 
 /*
@@ -18,6 +18,7 @@ import (
 
 type SecureInput struct {
 	elemChain elementChain.ElementChain
+	inputPointer int
 	answer    string
 	canceled  bool
 	finished  bool
@@ -91,84 +92,95 @@ func New(question string) *SecureInput {
  */
 
 func (secureInput *SecureInput) appendRunes(r []rune) {
-	xCursor, _ := cursor.GetCursor()
-	position := secureInput.getAppendPosition(xCursor)
 	oldAnswer := secureInput.answer
-	newAnswer :=
-		string([]rune(oldAnswer)[:position]) +
-			string(r) +
-			string([]rune(oldAnswer)[position:])
-	oldAnswerFake := secureInput.getAnswerElem().Str
-	newAnswerFake :=
-		string([]rune(oldAnswerFake)[:position]) +
-			string(AnswerFake) +
-			string([]rune(oldAnswerFake)[position:])
+	oldAnswerFront := string([]rune(oldAnswer)[:secureInput.inputPointer])
+	oldAnswerRear := string([]rune(oldAnswer))[secureInput.inputPointer:]
+	newAnswer := oldAnswerFront + string(r) + oldAnswerRear
 	secureInput.answer = newAnswer
-	secureInput.getAnswerElem().Str = newAnswerFake
+
+	oldAnswerFake := secureInput.getAnswerElemPtr().Str
+	oldAnswerFakeFront := string([]rune(oldAnswerFake)[:secureInput.inputPointer])
+	oldAnswerFakeRear := string([]rune(oldAnswerFake)[secureInput.inputPointer:])
+	newAnswerFake := oldAnswerFakeFront + string(AnswerFake) + oldAnswerFakeRear
+	secureInput.getAnswerElemPtr().Str = newAnswerFake
+
+	secureInput.inputPointer += len(r)
 }
 
-func (secureInput SecureInput) getAnswerElem() *element.Element {
+func (secureInput SecureInput) getPrefixElemPtr() *element.Element {
+	return &secureInput.elemChain.Elems[0]
+}
+
+func (secureInput SecureInput) getPaddingElemPtr() *element.Element {
+	return &secureInput.elemChain.Elems[1]
+}
+
+func (secureInput SecureInput) getQuestionElemPtr() *element.Element {
+	return &secureInput.elemChain.Elems[2]
+}
+
+func (secureInput SecureInput) getQuestionSuffixElemPtr() *element.Element {
+	return &secureInput.elemChain.Elems[3]
+}
+
+func (secureInput SecureInput) getAnswerElemPtr() *element.Element {
 	return &secureInput.elemChain.Elems[4]
 }
 
-func (secureInput SecureInput) getAnswerStart() (answerStart int) {
-	for i := 0; i < 4; i++ {
-		answerStart += len(secureInput.elemChain.Elems[i].Str)
-	}
+func (secureInput SecureInput) getNextLineElemPtr() *element.Element {
+	return &secureInput.elemChain.Elems[5]
+}
+
+func (secureInput SecureInput) getAnswerStartX() (answerStartX int) {
+	answerStartX += secureInput.GetStartX()
+	answerStartX += len(secureInput.getPrefixElemPtr().Str)
+	answerStartX += len(secureInput.getPaddingElemPtr().Str)
+	answerStartX += len(secureInput.getQuestionElemPtr().Str)
+	answerStartX += len(secureInput.getQuestionSuffixElemPtr().Str)
 	return
 }
 
-func (secureInput SecureInput) getAnswerEnd() (answerEnd int) {
-	for i := 0; i < 5; i++ {
-		answerEnd += len(secureInput.elemChain.Elems[i].Str)
-	}
+func (secureInput SecureInput) getAnswerEndX() (answerEndX int) {
+	answerEndX += secureInput.getAnswerStartX()
+	answerEndX += len(secureInput.getAnswerElemPtr().Str)
 	return
 }
 
-func (secureInput SecureInput) getAppendPosition(xCursor int) (position int) {
-	answerStart := secureInput.getAnswerStart()
-	/*
-	 * startX                                            cursorX
-	 * |                                                 |
-	 * v                                                 v
-	 * +--------+---------+----------+----------------+--------+------+
-	 * | Prefix | Padding | Question | QuestionSuffix | Answer | \r\n |
-	 * +--------+---------+----------+----------------+--------+------+
-	 *                                                ^
-	 *                                                |
-	 *                                                answerStart
-	 */
-	position = xCursor - answerStart
-	return
+func (secureInput *SecureInput) finalizeAnswer() {
+	secureInput.getAnswerElemPtr().Colors = constants.AnswerColors
+	secureInput.getNextLineElemPtr().Str = constants.NewLine
 }
 
-func (secureInput *SecureInput) fixAnswer() {
-	secureInput.getAnswerElem().Colors = constants.AnswerColors
-	secureInput.elemChain.Elems[len(secureInput.elemChain.Elems)-1].Str = constants.NewLine
+func (secureInput *SecureInput) print() {
+	secureInput.elemChain.Print()
 }
 
 func (secureInput *SecureInput) removeRune() {
-	xCursor, _ := cursor.GetCursor()
-	position := secureInput.getAppendPosition(xCursor)
-	oldAnswerFake := secureInput.getAnswerElem().Str
+	oldAnswerFake := secureInput.getAnswerElemPtr().Str
 	oldAnswer := secureInput.answer
+
 	if len(oldAnswerFake) == 0 {
 		return
 	}
 
-	newAnswerFake := string([]rune(oldAnswerFake)[:position-1])
-	newAnswer := string([]rune(oldAnswer)[:position-1])
-	if position < len(oldAnswer)-1 {
-		newAnswerFake += string([]rune(oldAnswerFake)[position:])
-		newAnswer += string([]rune(oldAnswer)[position:])
+	newAnswerFake := string([]rune(oldAnswerFake)[:secureInput.inputPointer-1])
+	newAnswer := string([]rune(oldAnswer)[:secureInput.inputPointer-1])
+	if secureInput.inputPointer < len(oldAnswer)-1 {
+		newAnswerFake += string([]rune(oldAnswerFake)[secureInput.inputPointer:])
+		newAnswer += string([]rune(oldAnswer)[secureInput.inputPointer:])
 	}
-	secureInput.getAnswerElem().Str = newAnswerFake
+	secureInput.getAnswerElemPtr().Str = newAnswerFake
 	secureInput.answer = newAnswer
+	secureInput.inputPointer--
 }
 
 /*
  * Public Methods
  */
+
+func (secureInput SecureInput) Erase() {
+	secureInput.elemChain.Erase()
+}
 
 func (secureInput SecureInput) GetMinX() int {
 	return secureInput.elemChain.GetMinX()
@@ -203,57 +215,46 @@ func (secureInput SecureInput) GetEndY() int {
 }
 
 func (secureInput *SecureInput) Ask() (string, bool) {
-	secureInput.Print()
-	xCursorShelter, yCursorShelter := cursor.GetCursor()
-
-	inputHelper.SetRaw(true)
+	secureInput.print()
 	for {
-		secureInput.elemChain.Erase()
 		cursor.MoveCursorTo(secureInput.GetStartX(), secureInput.GetStartY())
-		secureInput.Print()
+		secureInput.print()
 		if secureInput.finished || secureInput.canceled {
 			break
 		}
-		cursor.MoveCursorTo(xCursorShelter, yCursorShelter)
+		cursor.MoveCursorTo(
+			secureInput.getAnswerStartX() + secureInput.inputPointer,
+			secureInput.GetStartY())
+
 		// Get keyboard secureInput
+		inputHelper.SetRaw(true)
 		inputHelper.SetNoEcho(true)
 		secureInputRunes := inputHelper.Getch()
 		inputHelper.SetNoEcho(false)
+		inputHelper.SetRaw(false)
+
+		secureInput.Erase()
+
 		switch string(secureInputRunes) {
 		case constants.Delete: // delete
 			secureInput.removeRune()
-			answerStartX := secureInput.getAnswerStart()
-			if answerStartX < xCursorShelter {
-				xCursorShelter--
-			}
 		case constants.Enter: // enter
 			secureInput.finished = true
-			secureInput.fixAnswer()
+			secureInput.finalizeAnswer()
 		case constants.CtrlC: // ctrl + c
 			secureInput.canceled = true
-			secureInput.fixAnswer()
+			secureInput.finalizeAnswer()
 		case constants.RightArrow: // right arrow
-			answerEndX := secureInput.getAnswerEnd()
-			if answerEndX > xCursorShelter {
-				xCursorShelter++
+			if len(secureInput.getAnswerElemPtr().Str) > secureInput.inputPointer {
+				secureInput.inputPointer++
 			}
 		case constants.LeftArrow: // left arrow
-			answerStartX := secureInput.getAnswerStart()
-			if answerStartX < xCursorShelter {
-				xCursorShelter--
+			if 0 < secureInput.inputPointer {
+				secureInput.inputPointer--
 			}
 		default:
 			secureInput.appendRunes(secureInputRunes)
-			answerEndX := secureInput.getAnswerEnd()
-			if answerEndX > xCursorShelter {
-				xCursorShelter++
-			}
 		}
 	}
-	inputHelper.SetRaw(false)
 	return secureInput.answer, secureInput.canceled
-}
-
-func (secureInput *SecureInput) Print() {
-	secureInput.elemChain.Print()
 }

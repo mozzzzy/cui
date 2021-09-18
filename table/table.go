@@ -7,10 +7,10 @@ package table
 import (
 	"strings"
 
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
 )
 
 /*
@@ -254,6 +254,10 @@ func New(lines [][]string) *Table {
 /*
  * Public Methods
  */
+
+func (tbl *Table) Erase() {
+	tbl.elemChain.Erase()
+}
 
 func (tbl *Table) Print() {
 	tbl.elemChain.Print()

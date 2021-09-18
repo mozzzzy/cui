@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/mozzzzy/cui/v2"
+	"time"
+
+	"github.com/mozzzzy/cui/v3"
 )
 
 func main() {
@@ -13,11 +15,12 @@ func main() {
 		"php",
 	}
 	answer, canceled := cui.List(q, choices)
-
 	if canceled {
 		cui.Warn("Canceled.")
-		return
+		time.Sleep(1 * time.Second)
+	} else {
+		cui.Info("Answer is \"" + choices[answer] + "\".")
+		time.Sleep(3 * time.Second)
 	}
-
-	cui.Info("Answer is " + choices[answer] + ".")
+	cui.Erase()
 }

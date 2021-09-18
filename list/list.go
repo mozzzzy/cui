@@ -5,12 +5,12 @@ package list
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
-	"github.com/mozzzzy/cui/v2/inputHelper"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
+	"github.com/mozzzzy/cui/v3/core/inputHelper"
 )
 
 /*
@@ -50,18 +50,23 @@ var (
 func New(question string, choices []string) *List {
 	/*
 	 * list is following format.
-	 * +--------+---------+------------+---------+--------+------+
-	 * | Prefix | Padding | Question   | Padding | Answer | \r\n |
-	 * +--------+----+----+----+-------+-+------++--------+------+
-	 * |Pointer      | Padding | Choice0 | \r\n |
-	 * +-------------+---------+---------+------+
-	 * |PointerSpace | Padding | Choice1 | \r\n |
-	 * +-------------+---------+---------+------+
-	 * |PointerSpace | Padding | Choice2 | \r\n |
-	 * +-------------+---------+---------+------+
-	 * |PointerSpace | Padding | Choice3 | \r\n |
-	 * +-------------+---------+---------+------+
+	 * +--------+---------+----------+---------+--------+------+
+	 * | Prefix | Padding | Question | Padding | Answer | \r\n |
+	 * +--------+----+----+----+-----+----+-----++-------+------+
+	 * |Pointer      | Padding | Choice 0 | \r\n |
+	 * +-------------+---------+----------+------+
+	 * |PointerSpace | Padding | Choice 1 | \r\n |
+	 * +-------------+---------+----------+------+
+	 * |PointerSpace | Padding | Choice 2 | \r\n |
+	 * +-------------+---------+----------+------+
+	 * |PointerSpace | Padding | Choice 3 | \r\n |
+	 * +-------------+---------+----------+------+
 	 */
+	// Create first line's ElemChain
+	// +--------+---------+----------+---------+--------+------+
+	// | Prefix | Padding | Question | Padding | Answer | \r\n |
+	// +--------+---------+----------+---------+--------+------+
+	//
 	elemsFirstLine := []element.Element{
 		// Prefix
 		{
@@ -94,9 +99,19 @@ func New(question string, choices []string) *List {
 			Colors: []string{},
 		},
 	}
-
 	firstLineElemChain := elementChain.New(elemsFirstLine)
 
+	// Create choices ElemChain
+	// +-------------+---------+----------+------+
+	// |Pointer      | Padding | Choice 0 | \r\n |
+	// +-------------+---------+----------+------+
+	// |PointerSpace | Padding | Choice 1 | \r\n |
+	// +-------------+---------+----------+------+
+	// |PointerSpace | Padding | Choice 2 | \r\n |
+	// +-------------+---------+----------+------+
+	// |PointerSpace | Padding | Choice 3 | \r\n |
+	// +-------------+---------+----------+------+
+	//
 	choicesElemChain := elementChain.New([]element.Element{})
 	initialPointerPosition := 0
 	for i, choice := range choices {
@@ -126,7 +141,7 @@ func New(question string, choices []string) *List {
 		choices:            choices,
 	}
 
-	list.SetPointer(initialPointerPosition)
+	list.setPointer(initialPointerPosition)
 	return &list
 }
 
@@ -134,9 +149,62 @@ func New(question string, choices []string) *List {
  * Private Methods
  */
 
+func (list *List) print() {
+	list.firstLineElemChain.Print()
+	if !list.finished && !list.canceled {
+		list.choicesElemChain.Print()
+	} else {
+		list.choicesElemChain.Erase()
+		cursor.MoveCursorTo(list.firstLineElemChain.GetEndX(), list.firstLineElemChain.GetEndY())
+	}
+}
+
+func (list *List) setAnswerElem() {
+	list.firstLineElemChain.Elems[4].Str =
+		constants.OpenParenthesis +
+			list.choices[list.pointerPosition] +
+			constants.CloseParenthesis
+}
+
+func (list *List) setPointer(pointerPosition int) {
+	if list.finished {
+		return
+	}
+	list.pointerPosition = pointerPosition
+	for i := 0; i < len(list.choicesElemChain.Elems); i += 4 {
+		// convert element index to choice index
+		choiceIndex := i / 4
+		if choiceIndex == list.pointerPosition {
+			list.choicesElemChain.Elems[i].Str = Pointer
+			list.choicesElemChain.Elems[i].Colors = constants.PointerColors
+			list.choicesElemChain.Elems[i+2].Colors = ChoiceColors
+		} else {
+			list.choicesElemChain.Elems[i].Str = PointerSpace
+			list.choicesElemChain.Elems[i].Colors = PointerSpaceColors
+			list.choicesElemChain.Elems[i+2].Colors = NoChoiceColors
+		}
+	}
+}
+
+func (list *List) decrementPointer() {
+	list.setPointer(list.pointerPosition - 1)
+}
+
+func (list *List) incrementPointer() {
+	list.setPointer(list.pointerPosition + 1)
+}
+
 /*
  * Public Methods
  */
+
+func (list List) Erase() {
+	list.firstLineElemChain.Erase()
+	if list.finished || list.canceled {
+		return
+	}
+	list.choicesElemChain.Erase()
+}
 
 func (list List) GetMinX() int {
 	firstMinX := list.firstLineElemChain.GetMinX()
@@ -199,25 +267,26 @@ func (list List) GetEndY() int {
 }
 
 func (list *List) Ask() (int, bool) {
-	inputHelper.SetRaw(true)
-	list.Print()
+	list.print()
 	for {
 		cursor.MoveCursorTo(list.GetStartX(), list.GetStartY())
-		list.Print()
+		list.print()
 		if list.finished || list.canceled {
 			break
 		}
 		// Get keyboard input
-		inputHelper.SetNoEcho(true);
+		inputHelper.SetRaw(true)
+		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
-		inputHelper.SetNoEcho(false);
+		inputHelper.SetNoEcho(false)
+		inputHelper.SetRaw(false)
 
 		switch string(inputRunes) {
 		case constants.UpArrow: // up arrow
 			fallthrough
 		case "k": // up
 			if list.pointerPosition > 0 {
-				list.DecrementPointer()
+				list.decrementPointer()
 			}
 		case constants.DownArrow: // down arrow
 			fallthrough
@@ -226,60 +295,14 @@ func (list *List) Ask() (int, bool) {
 				list.incrementPointer()
 			}
 		case constants.Enter: // enter
-			list.SetAnswerElem()
+			list.setAnswerElem()
 			list.finished = true
 		case constants.CtrlC: // ctrl + c
 			list.canceled = true
 		}
 	}
-	inputHelper.SetRaw(false)
 	if list.finished {
 		return list.pointerPosition, list.canceled
 	}
 	return 0, list.canceled
-}
-
-func (list *List) Print() {
-	list.firstLineElemChain.Print()
-	if !list.finished {
-		list.choicesElemChain.Print()
-	} else {
-		list.choicesElemChain.Erase()
-		cursor.MoveCursorTo(list.firstLineElemChain.GetEndX(), list.firstLineElemChain.GetEndY())
-	}
-}
-
-func (list *List) SetAnswerElem() {
-	list.firstLineElemChain.Elems[4].Str =
-		constants.OpenParenthesis +
-			list.choices[list.pointerPosition] +
-			constants.CloseParenthesis
-}
-
-func (list *List) SetPointer(pointerPosition int) {
-	if list.finished {
-		return
-	}
-	list.pointerPosition = pointerPosition
-	for i := 0; i < len(list.choicesElemChain.Elems); i += 4 {
-		// convert element index to choice index
-		choiceIndex := i / 4
-		if choiceIndex == list.pointerPosition {
-			list.choicesElemChain.Elems[i].Str = Pointer
-			list.choicesElemChain.Elems[i].Colors = constants.PointerColors
-			list.choicesElemChain.Elems[i+2].Colors = ChoiceColors
-		} else {
-			list.choicesElemChain.Elems[i].Str = PointerSpace
-			list.choicesElemChain.Elems[i].Colors = PointerSpaceColors
-			list.choicesElemChain.Elems[i+2].Colors = NoChoiceColors
-		}
-	}
-}
-
-func (list *List) DecrementPointer() {
-	list.SetPointer(list.pointerPosition - 1)
-}
-
-func (list *List) incrementPointer() {
-	list.SetPointer(list.pointerPosition + 1)
 }

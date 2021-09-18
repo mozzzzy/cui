@@ -9,25 +9,111 @@ package main
 import (
 	"time"
 
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/debugUtil"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
 )
 
 func main() {
-	elem0 := element.New("Hello", []string{color.Bold, color.BlueFg})
-	elem1 := element.New(" ", []string{})
-	elem2 := element.New("World", []string{color.Bold, color.CyanFg})
-	elem3 := element.New("!!", []string{color.Bold, color.GreenFg})
+	elems0 := []element.Element{
+		{
+			Str:    "Hello ",
+			Colors: []string{color.Bold, color.BlueFg},
+		},
+		{
+			Str:    "World",
+			Colors: []string{color.Bold, color.CyanFg},
+		},
+		{
+			Str:    "!!",
+			Colors: []string{color.Bold, color.GreenFg},
+		},
+		{
+			Str:    "\n",
+			Colors: []string{},
+		},
+	}
+	elemChain0 := elementChain.New(elems0)
 
-	elemChain0 := elementChain.New(
-		[]element.Element{*elem0, *elem1, *elem2, *elem3})
+	elems1 := []element.Element{
+		{
+			Str:    "Hello ",
+			Colors: []string{color.Bold, color.BlueBg},
+		},
+		{
+			Str:    "World",
+			Colors: []string{color.Bold, color.CyanBg},
+		},
+		{
+			Str:    "!!",
+			Colors: []string{color.Bold, color.GreenBg},
+		},
+		{
+			Str:    "\n",
+			Colors: []string{},
+		},
+	}
+	elemChain1 := elementChain.New(elems1)
+
+	elems2 := []element.Element{
+		{
+			Str:    "Hello ",
+			Colors: []string{color.Bold, color.BlueFg},
+		},
+		{
+			Str:    "World",
+			Colors: []string{color.Bold, color.CyanBg},
+		},
+		{
+			Str:    "!!",
+			Colors: []string{color.Bold, color.GreenFg},
+		},
+		{
+			Str:    "\n",
+			Colors: []string{},
+		},
+	}
+	elemChain2 := elementChain.New(elems2)
+
+	elems3 := []element.Element{
+		{
+			Str:    "Hello ",
+			Colors: []string{color.Bold, color.BlueBg},
+		},
+		{
+			Str:    "World",
+			Colors: []string{color.Bold, color.CyanFg},
+		},
+		{
+			Str:    "!!",
+			Colors: []string{color.Bold, color.GreenBg},
+		},
+		{
+			Str:    "\n",
+			Colors: []string{},
+		},
+	}
+	elemChain3 := elementChain.New(elems3)
+
+
 	elemChain0.Print()
-
 	time.Sleep(1 * time.Second)
+	elemChain1.Print()
+	time.Sleep(1 * time.Second)
+	elemChain2.Print()
+	time.Sleep(1 * time.Second)
+	elemChain3.Print()
+	time.Sleep(1 * time.Second)
+
 	elemChain0.Erase()
 	time.Sleep(1 * time.Second)
+	elemChain1.Erase()
+	time.Sleep(1 * time.Second)
+	elemChain2.Erase()
+	time.Sleep(1 * time.Second)
+	elemChain3.Erase()
+	time.Sleep(1 * time.Second)
 
-	debugUtil.DebugCoordinate(elemChain0)
+	cursor.MoveCursorToZeroZero()
 }

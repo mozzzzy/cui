@@ -1,43 +1,23 @@
 package main
 
-/*
- * Module Dependencies
- */
-
 import (
-	"github.com/mozzzzy/cui/v2"
+	"time"
+
+	"github.com/mozzzzy/cui/v3"
 )
 
-/*
- * Types
- */
-
-/*
- * Constants and Package Scope Variables
- */
-
-/*
- * Private Functions
- */
-
-/*
- * Public Functions
- */
-
 func main() {
-	answer, canceled := cui.SecureInput("Please type something and Enter")
+	cui.Info("This is demo code of secureInput package.")
+
+	answer, canceled := cui.SecureInput("Please type something and press Enter.")
 	if canceled {
 		cui.Warn("Canceled.")
-		return
+		time.Sleep(1 * time.Second)
+		cui.Erase()
+	} else {
+		cui.Info("Answer is \"" + answer + "\".")
+		time.Sleep(3 * time.Second)
 	}
-	cui.Info("Answer is \"" + answer + "\".")
+	cui.Erase()
+	return
 }
-
-/*
- * Private Methods
- */
-
-/*
- * Public Methods
- */
-

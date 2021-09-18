@@ -5,9 +5,9 @@ package warnMessage
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/prefixedMessage"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/prefixedMessage"
 )
 
 /*
@@ -51,6 +51,10 @@ func New(str string) *WarnMessage {
 /*
  * Public Methods
  */
+
+func (msg WarnMessage) Erase() {
+	msg.pMsg.Erase()
+}
 
 func (msg WarnMessage) GetMinX() int {
 	return msg.pMsg.GetMinX()

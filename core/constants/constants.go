@@ -5,7 +5,7 @@ package constants
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
+	"github.com/mozzzzy/cui/v3/color"
 )
 
 /*

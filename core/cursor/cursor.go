@@ -6,8 +6,10 @@ package cursor
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
-	"github.com/mozzzzy/cui/v2/color"
+
+	"github.com/mozzzzy/cui/v3/color"
 )
 
 /*
@@ -30,19 +32,14 @@ var (
  * Public Functions
  */
 
-/*
- * Private Methods
- */
-
-/*
- * Public Methods
- */
-
 func GetCursor() (int, int) {
 	return cursorX, cursorY
 }
 
 func MoveCursorTo(x, y int) {
+	if x < 0 || y < 0 {
+		panic("Invalid coordinates (x, y) = (" + strconv.Itoa(x) + ", " + strconv.Itoa(y) + ")")
+	}
 	/*
 	 *    ^      A
 	 *  <-|->  D   C
@@ -69,6 +66,7 @@ func Print(str string, colors []string) {
 	str = strings.ReplaceAll(str, "\r", "")
 
 	lines := strings.Split(str, "\n")
+	lineNum := len(lines)
 	for i, line := range lines {
 		for _, c := range colors {
 			fmt.Print(c)
@@ -76,7 +74,7 @@ func Print(str string, colors []string) {
 		fmt.Print(line)
 		fmt.Print(color.Default)
 		cursorX += len(line)
-		if i != len(lines)-1 {
+		if i < lineNum-1 {
 			fmt.Print("\r\n")
 			cursorX = 0
 			cursorY++
@@ -87,3 +85,11 @@ func Print(str string, colors []string) {
 func MoveCursorToZeroZero() {
 	MoveCursorTo(0, 0)
 }
+
+/*
+ * Private Methods
+ */
+
+/*
+ * Public Methods
+ */

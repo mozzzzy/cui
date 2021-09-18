@@ -7,11 +7,11 @@ package progressBar
 import (
 	"strconv"
 
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
 )
 
 /*
@@ -29,13 +29,15 @@ type ProgressBar struct {
  */
 
 var (
-	StrColors           []string
-	ProgressLen         int      = 75
-	Progress            string   = " "
-	ProgressColors      []string = []string{color.CyanBg}
-	ProgressSpace       string   = "."
-	ProgressSpaceColors []string = []string{}
-	Percent             string   = "%"
+	StrColors               []string
+	ProgressLen             int      = 75
+	Progress                string   = " "
+	ProgressColors          []string = []string{color.CyanBg}
+	ProgressFailureColors   []string = []string{color.RedBg}
+	ProgressSpace           string   = "."
+	ProgressSpaceColors     []string = []string{}
+	Percent                 string   = "%"
+	PercentageFailureColors []string = []string{color.RedFg}
 )
 
 /*
@@ -47,7 +49,7 @@ var (
  */
 
 func New(str string) *ProgressBar {
-	progressSpaceStr := ""
+	var progressSpaceStr string
 	for i := 0; i < ProgressLen; i++ {
 		progressSpaceStr += ProgressSpace
 	}
@@ -107,7 +109,7 @@ func New(str string) *ProgressBar {
 			Str:    "",
 			Colors: StrColors,
 		},
-		// New line
+		// Next line
 		{
 			Str:    "",
 			Colors: []string{},
@@ -125,9 +127,29 @@ func New(str string) *ProgressBar {
  * Private Methods
  */
 
+func (pb ProgressBar) getPrefixElemPtr() *element.Element {
+	return &(pb.elemChain.Elems[0])
+}
+
+func (pb ProgressBar) getProgressElemPtr() *element.Element {
+	return &(pb.elemChain.Elems[5])
+}
+
+func (pb ProgressBar) getProgressSpaceElemPtr() *element.Element {
+	return &(pb.elemChain.Elems[6])
+}
+
+func (pb ProgressBar) getPercentageElemPtr() *element.Element {
+	return &(pb.elemChain.Elems[8])
+}
+
+func (pb ProgressBar) getNextLineElemPtr() *element.Element {
+	return &(pb.elemChain.Elems[9])
+}
+
 func (pb *ProgressBar) setPercentageElem(percentage int) {
 	precentageStr := strconv.Itoa(percentage) + Percent
-	pb.elemChain.Elems[8].Str = precentageStr
+	pb.getPercentageElemPtr().Str = precentageStr
 }
 
 func (pb *ProgressBar) setProgressElem(percentage int) {
@@ -141,8 +163,8 @@ func (pb *ProgressBar) setProgressElem(percentage int) {
 		progressSpaceStr += ProgressSpace
 	}
 	// Progress elem
-	pb.elemChain.Elems[5].Str = progressStr
-	pb.elemChain.Elems[6].Str = progressSpaceStr
+	pb.getProgressElemPtr().Str = progressStr
+	pb.getProgressSpaceElemPtr().Str = progressSpaceStr
 }
 
 func (pb *ProgressBar) setResultElem() {
@@ -150,17 +172,21 @@ func (pb *ProgressBar) setResultElem() {
 		return
 	}
 	if pb.succeeded {
-		pb.elemChain.Elems[0].Str = constants.Complete
-		pb.elemChain.Elems[0].Colors = constants.CompleteColors
+		pb.getPrefixElemPtr().Str = constants.Complete
+		pb.getPrefixElemPtr().Colors = constants.CompleteColors
 	} else {
-		pb.elemChain.Elems[0].Str = constants.Failure
-		pb.elemChain.Elems[0].Colors = constants.FailureColors
+		pb.getPrefixElemPtr().Str = constants.Failure
+		pb.getPrefixElemPtr().Colors = constants.FailureColors
 	}
 }
 
 /*
  * Public Methods
  */
+
+func (pb ProgressBar) Erase() {
+	pb.elemChain.Erase()
+}
 
 func (pb ProgressBar) GetMinX() int {
 	return pb.elemChain.GetMinX()
@@ -202,8 +228,9 @@ func (pb *ProgressBar) Failure() {
 	if pb.finished {
 		return
 	}
-	pb.elemChain.Elems[8].Colors = constants.FailureColors
-	pb.elemChain.Elems[9].Str = constants.NewLine
+	pb.getProgressElemPtr().Colors = ProgressFailureColors
+	pb.getPercentageElemPtr().Colors = PercentageFailureColors
+	pb.getNextLineElemPtr().Str = constants.NewLine
 	pb.succeeded = false
 	pb.finished = true
 	pb.setResultElem()
@@ -218,8 +245,8 @@ func (pb *ProgressBar) ReportProgress(percentage int) {
 	}
 	if percentage >= 100 {
 		percentage = 100
-		pb.elemChain.Elems[8].Colors = constants.AnswerColors
-		pb.elemChain.Elems[9].Str = constants.NewLine
+		pb.getPercentageElemPtr().Colors = constants.AnswerColors
+		pb.getNextLineElemPtr().Str = constants.NewLine
 		pb.finished = true
 		pb.succeeded = true
 		pb.setResultElem()

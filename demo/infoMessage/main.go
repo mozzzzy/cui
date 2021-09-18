@@ -1,9 +1,20 @@
 package main
 
 import (
-	"github.com/mozzzzy/cui/v2"
+	"time"
+
+	"github.com/mozzzzy/cui/v3"
 )
 
 func main() {
-	cui.Info("Some Info Message!!")
+	cui.Info("This is demo code of infoMessage package.")
+
+	cui.Info("Some Info Message !!")
+	cui.Info("Some Info Message !!")
+	cui.Info("Some Info Message !!")
+	cui.Info("Some Info Message !!")
+	cui.Info("Some Info Message !!")
+
+	time.Sleep(3 * time.Second)
+	cui.Erase()
 }

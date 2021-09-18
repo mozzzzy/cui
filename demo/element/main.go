@@ -7,10 +7,10 @@ package main
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/debugUtil"
-	"github.com/mozzzzy/cui/v2/element"
 	"time"
+
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/element"
 )
 
 func main() {
@@ -31,6 +31,4 @@ func main() {
 	time.Sleep(1 * time.Second)
 	elem2.Erase()
 	time.Sleep(1 * time.Second)
-
-	debugUtil.DebugCoordinate(elem0)
 }

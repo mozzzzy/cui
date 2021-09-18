@@ -5,8 +5,8 @@ package elementChain
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/cursor"
-	"github.com/mozzzzy/cui/v2/element"
+	"github.com/mozzzzy/cui/v3/core/cursor"
+	"github.com/mozzzzy/cui/v3/core/element"
 )
 
 /*
@@ -42,6 +42,13 @@ func New(elems []element.Element) *ElementChain {
 /*
  * Public Methods
  */
+
+func (elemChain ElementChain) Erase() {
+	for i := 0; i < len(elemChain.Elems); i++ {
+		elemChain.Elems[i].Erase()
+	}
+	cursor.MoveCursorTo(elemChain.GetStartX(), elemChain.GetStartY())
+}
 
 func (elemChain ElementChain) GetMinX() int {
 	var minX int
@@ -107,11 +114,4 @@ func (elemChain *ElementChain) Print() {
 	for i := 0; i < len(elemChain.Elems); i++ {
 		elemChain.Elems[i].Print()
 	}
-}
-
-func (elemChain ElementChain) Erase() {
-	for i := 0; i < len(elemChain.Elems); i++ {
-		elemChain.Elems[i].Erase()
-	}
-	cursor.MoveCursorTo(elemChain.GetStartX(), elemChain.GetStartY())
 }

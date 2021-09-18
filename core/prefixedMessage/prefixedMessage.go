@@ -5,9 +5,9 @@ package prefixedMessage
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/element"
-	"github.com/mozzzzy/cui/v2/elementChain"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/element"
+	"github.com/mozzzzy/cui/v3/core/elementChain"
 )
 
 /*
@@ -51,6 +51,10 @@ func New(
 /*
  * Public Methods
  */
+
+func (msg PrefixedMessage) Erase() {
+	msg.elemChain.Erase()
+}
 
 func (msg PrefixedMessage) GetMinX() int {
 	return msg.elemChain.GetMinX()

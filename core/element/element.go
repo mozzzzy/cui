@@ -5,9 +5,10 @@ package element
  */
 
 import (
+	"math"
 	"strings"
 
-	"github.com/mozzzzy/cui/v2/cursor"
+	"github.com/mozzzzy/cui/v3/core/cursor"
 )
 
 /*
@@ -49,6 +50,18 @@ func New(str string, colors []string) *Element {
  * Private Methods
  */
 
+/*
+ *               startX                          maxX
+ *                  v                             v
+ *                 +-------------------------------+
+ * startY & minY > |                               |
+ *          +------+------------+------------------+
+ *          |                   | < maxY & endY
+ *          +-------------------+
+ *           ^                 ^
+ *         minX               endX
+ *
+ */
 func (elem *Element) calculateCoordinates(xCursor, yCursor int) {
 	// startX
 	elem.startX = xCursor
@@ -56,8 +69,10 @@ func (elem *Element) calculateCoordinates(xCursor, yCursor int) {
 	elem.startY = yCursor
 
 	elemLines := strings.Split(elem.Str, "\n")
+	elemLineNum := len(elemLines)
+
 	// minX
-	if len(elemLines) > 1 {
+	if elemLineNum > 1 {
 		elem.minX = 0
 	} else {
 		elem.minX = elem.startX
@@ -70,20 +85,25 @@ func (elem *Element) calculateCoordinates(xCursor, yCursor int) {
 		} else {
 			oneLineLen = len(line)
 		}
-		if oneLineLen > elem.maxX {
-			elem.maxX = oneLineLen
+		// Note: coordinates start from 0. So "-1".
+		lineMaxX := int(math.Max(0, float64(oneLineLen-1)))
+		if lineMaxX > elem.maxX {
+			elem.maxX = lineMaxX
 		}
 	}
 	// minY
 	elem.minY = elem.startY
 	// maxY
-	elem.maxY = elem.startY + len(elemLines) - 1
+	// Note: coordinates start from 0. So "-1".
+	elem.maxY = elem.startY + elemLineNum - 1
 
 	// endX
-	if len(elemLines) == 1 {
-		elem.endX = elem.startX + len(elemLines[len(elemLines)-1])
+	lastLine := elemLines[elemLineNum-1]
+	lastLineMaxX := int(math.Max(0, float64(len(lastLine)-1)))
+	if elemLineNum == 1 {
+		elem.endX = elem.startX + lastLineMaxX
 	} else {
-		elem.endX = len(elemLines[len(elemLines)-1])
+		elem.endX = lastLineMaxX
 	}
 	// endY
 	elem.endY = elem.maxY
@@ -136,12 +156,15 @@ func (elem *Element) Print() {
 }
 
 func (elem Element) Erase() {
-	cursor.MoveCursorTo(elem.GetMinX(), elem.GetMinY())
-	for y := elem.GetMinY(); y <= elem.GetMaxY(); y++ {
-		for x := elem.GetMinX(); x <= elem.GetMaxX(); x++ {
+	cursor.MoveCursorTo(elem.GetStartX(), elem.GetStartY())
+	elemLines := strings.Split(elem.Str, "\n")
+	elemLineNum := len(elemLines)
+	for lineIndex, line := range elemLines {
+		oneLineLen := len(line)
+		for charIndex := 0; charIndex < oneLineLen; charIndex++ {
 			cursor.Print(" ", []string{})
 		}
-		if y != elem.GetMaxY() {
+		if lineIndex < elemLineNum-1 {
 			cursor.Print("\n", []string{})
 		}
 	}

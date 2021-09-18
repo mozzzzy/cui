@@ -5,9 +5,9 @@ package errorMessage
  */
 
 import (
-	"github.com/mozzzzy/cui/v2/color"
-	"github.com/mozzzzy/cui/v2/constants"
-	"github.com/mozzzzy/cui/v2/prefixedMessage"
+	"github.com/mozzzzy/cui/v3/color"
+	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/prefixedMessage"
 )
 
 /*
@@ -51,6 +51,10 @@ func New(str string) *ErrorMessage {
 /*
  * Public Methods
  */
+
+func (msg ErrorMessage) Erase() {
+	msg.pMsg.Erase()
+}
 
 func (msg ErrorMessage) GetMinX() int {
 	return msg.pMsg.GetMinX()
