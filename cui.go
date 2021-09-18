@@ -5,6 +5,7 @@ package cui
  */
 
 import (
+	"github.com/mozzzzy/cui/v3/checkableTable"
 	"github.com/mozzzzy/cui/v3/checkbox"
 	"github.com/mozzzzy/cui/v3/confirmation"
 	"github.com/mozzzzy/cui/v3/core/cursor"
@@ -18,6 +19,7 @@ import (
 	"github.com/mozzzzy/cui/v3/progressBar"
 	"github.com/mozzzzy/cui/v3/secureInput"
 	"github.com/mozzzzy/cui/v3/spinner"
+	"github.com/mozzzzy/cui/v3/question"
 	"github.com/mozzzzy/cui/v3/table"
 	"github.com/mozzzzy/cui/v3/warnMessage"
 )
@@ -100,18 +102,25 @@ func ProgressBar(msg string) *progressBar.ProgressBar {
 	return e
 }
 
-func List(question string, choices []string) (int, bool) {
-	e := list.New(question, choices)
-	answer, canceled := e.Ask()
+func List(choices []string) (int, bool, *list.List) {
+	e := list.New(choices)
+	answer, canceled, _ := e.Ask()
 	erasables = append(erasables, e)
-	return answer, canceled
+	return answer, canceled, e
 }
 
-func Checkbox(question string, choices []string) ([]int, bool) {
-	e := checkbox.New(question, choices)
-	answers, canceled := e.Ask()
+func CheckableTable(choices [][]string) ([]int, bool, *checkableTable.CheckableTable) {
+	e := checkableTable.New(choices)
+	answers, canceled, _ := e.Ask()
 	erasables = append(erasables, e)
-	return answers, canceled
+	return answers, canceled, e
+}
+
+func Checkbox(choices []string) ([]int, bool, *checkbox.Checkbox) {
+	e := checkbox.New(choices)
+	answers, canceled, _ := e.Ask()
+	erasables = append(erasables, e)
+	return answers, canceled, e
 }
 
 func Confirmation(question string) (bool, bool) {
@@ -133,6 +142,13 @@ func SecureInput(question string) (string, bool) {
 	answer, canceled := e.Ask()
 	erasables = append(erasables, e)
 	return answer, canceled
+}
+
+func Question(q string) *question.Question {
+	e := question.New(q)
+	e.Print()
+	erasables = append(erasables, e)
+	return e
 }
 
 func Erase() {

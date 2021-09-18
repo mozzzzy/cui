@@ -7,10 +7,9 @@ import (
 )
 
 func main() {
-
 	cui.Info("This is demo code of checkbox package.")
 
-	q := "What language do you like?"
+	q := cui.Question("What language do you like?")
 	choices := []string{
 		"c",
 		"c++",
@@ -20,7 +19,8 @@ func main() {
 		"php",
 		"ruby",
 	}
-	answers, canceled := cui.Checkbox(q, choices)
+	answers, canceled, checkbox := cui.Checkbox(choices)
+	checkbox.Erase()
 
 	if canceled {
 		cui.Warn("Canceled.")
@@ -29,10 +29,14 @@ func main() {
 		return
 	}
 
-	cui.Info("Following choices are checked...")
-	for _, a := range answers {
-		cui.Info(choices[a])
+	answerStr := ""
+	for index, a := range answers {
+		answerStr += choices[a]
+		if index < len(answers) - 1 {
+			answerStr += ","
+		}
 	}
+	q.SetAnswer(answerStr)
 	time.Sleep(3 * time.Second)
 	cui.Erase()
 	return

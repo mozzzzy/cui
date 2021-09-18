@@ -7,20 +7,24 @@ import (
 )
 
 func main() {
-	q := "What is your favorite language?"
+	q := cui.Question("What is your favorite language?")
 	choices := []string{
 		"c++",
 		"go",
 		"javascript",
 		"php",
 	}
-	answer, canceled := cui.List(q, choices)
+	answer, canceled, list := cui.List(choices)
+	list.Erase()
+
 	if canceled {
 		cui.Warn("Canceled.")
 		time.Sleep(1 * time.Second)
-	} else {
-		cui.Info("Answer is \"" + choices[answer] + "\".")
-		time.Sleep(3 * time.Second)
+		cui.Erase()
+		return
 	}
+
+	q.SetAnswer(choices[answer])
+	time.Sleep(3 * time.Second)
 	cui.Erase()
 }

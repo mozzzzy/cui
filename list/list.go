@@ -18,12 +18,11 @@ import (
  */
 
 type List struct {
-	firstLineElemChain elementChain.ElementChain
-	choicesElemChain   elementChain.ElementChain
-	choices            []string
-	pointerPosition    int
-	finished           bool
-	canceled           bool
+	choicesElemChain elementChain.ElementChain
+	choices          []string
+	pointerPosition  int
+	finished         bool
+	canceled         bool
 }
 
 /*
@@ -47,12 +46,10 @@ var (
  * Public Functions
  */
 
-func New(question string, choices []string) *List {
+func New(choices []string) *List {
 	/*
 	 * list is following format.
-	 * +--------+---------+----------+---------+--------+------+
-	 * | Prefix | Padding | Question | Padding | Answer | \r\n |
-	 * +--------+----+----+----+-----+----+-----++-------+------+
+	 * +-------------+---------+----------+------+
 	 * |Pointer      | Padding | Choice 0 | \r\n |
 	 * +-------------+---------+----------+------+
 	 * |PointerSpace | Padding | Choice 1 | \r\n |
@@ -62,56 +59,6 @@ func New(question string, choices []string) *List {
 	 * |PointerSpace | Padding | Choice 3 | \r\n |
 	 * +-------------+---------+----------+------+
 	 */
-	// Create first line's ElemChain
-	// +--------+---------+----------+---------+--------+------+
-	// | Prefix | Padding | Question | Padding | Answer | \r\n |
-	// +--------+---------+----------+---------+--------+------+
-	//
-	elemsFirstLine := []element.Element{
-		// Prefix
-		{
-			Str:    constants.QuestionPrefix,
-			Colors: constants.QuestionPrefixColors,
-		},
-		// Padding
-		{
-			Str:    constants.Padding,
-			Colors: constants.PaddingColors,
-		},
-		// Question
-		{
-			Str:    question,
-			Colors: constants.QuestionColors,
-		},
-		// Padding
-		{
-			Str:    constants.Padding,
-			Colors: constants.PaddingColors,
-		},
-		// Answer
-		{
-			Str:    "",
-			Colors: constants.AnswerColors,
-		},
-		// Next line
-		{
-			Str:    constants.NewLine,
-			Colors: []string{},
-		},
-	}
-	firstLineElemChain := elementChain.New(elemsFirstLine)
-
-	// Create choices ElemChain
-	// +-------------+---------+----------+------+
-	// |Pointer      | Padding | Choice 0 | \r\n |
-	// +-------------+---------+----------+------+
-	// |PointerSpace | Padding | Choice 1 | \r\n |
-	// +-------------+---------+----------+------+
-	// |PointerSpace | Padding | Choice 2 | \r\n |
-	// +-------------+---------+----------+------+
-	// |PointerSpace | Padding | Choice 3 | \r\n |
-	// +-------------+---------+----------+------+
-	//
 	choicesElemChain := elementChain.New([]element.Element{})
 	initialPointerPosition := 0
 	for i, choice := range choices {
@@ -136,9 +83,8 @@ func New(question string, choices []string) *List {
 	}
 
 	list := List{
-		firstLineElemChain: *firstLineElemChain,
-		choicesElemChain:   *choicesElemChain,
-		choices:            choices,
+		choicesElemChain: *choicesElemChain,
+		choices:          choices,
 	}
 
 	list.setPointer(initialPointerPosition)
@@ -150,20 +96,7 @@ func New(question string, choices []string) *List {
  */
 
 func (list *List) print() {
-	list.firstLineElemChain.Print()
-	if !list.finished && !list.canceled {
-		list.choicesElemChain.Print()
-	} else {
-		list.choicesElemChain.Erase()
-		cursor.MoveCursorTo(list.firstLineElemChain.GetEndX(), list.firstLineElemChain.GetEndY())
-	}
-}
-
-func (list *List) setAnswerElem() {
-	list.firstLineElemChain.Elems[4].Str =
-		constants.OpenParenthesis +
-			list.choices[list.pointerPosition] +
-			constants.CloseParenthesis
+	list.choicesElemChain.Print()
 }
 
 func (list *List) setPointer(pointerPosition int) {
@@ -199,63 +132,31 @@ func (list *List) incrementPointer() {
  */
 
 func (list List) Erase() {
-	list.firstLineElemChain.Erase()
-	if list.finished || list.canceled {
-		return
-	}
 	list.choicesElemChain.Erase()
 }
 
 func (list List) GetMinX() int {
-	firstMinX := list.firstLineElemChain.GetMinX()
-	choicesMinX := list.choicesElemChain.GetMinX()
-
-	if firstMinX < choicesMinX {
-		return firstMinX
-	} else {
-		return choicesMinX
-	}
+	return list.choicesElemChain.GetMinX()
 }
 
 func (list List) GetMinY() int {
-	firstMinY := list.firstLineElemChain.GetMinY()
-	choicesMinY := list.choicesElemChain.GetMinY()
-
-	if firstMinY < choicesMinY {
-		return firstMinY
-	} else {
-		return choicesMinY
-	}
+	return list.choicesElemChain.GetMinY()
 }
 
 func (list List) GetMaxX() int {
-	firstMaxX := list.firstLineElemChain.GetMaxX()
-	choicesMaxX := list.choicesElemChain.GetMaxX()
-
-	if firstMaxX < choicesMaxX {
-		return firstMaxX
-	} else {
-		return choicesMaxX
-	}
+	return list.choicesElemChain.GetMaxX()
 }
 
 func (list List) GetMaxY() int {
-	firstMaxY := list.firstLineElemChain.GetMaxY()
-	choicesMaxY := list.choicesElemChain.GetMaxY()
-
-	if firstMaxY < choicesMaxY {
-		return firstMaxY
-	} else {
-		return choicesMaxY
-	}
+	return list.choicesElemChain.GetMaxY()
 }
 
 func (list List) GetStartX() int {
-	return list.firstLineElemChain.GetStartX()
+	return list.choicesElemChain.GetStartX()
 }
 
 func (list List) GetStartY() int {
-	return list.firstLineElemChain.GetStartY()
+	return list.choicesElemChain.GetStartY()
 }
 
 func (list List) GetEndX() int {
@@ -266,7 +167,7 @@ func (list List) GetEndY() int {
 	return list.choicesElemChain.GetEndY()
 }
 
-func (list *List) Ask() (int, bool) {
+func (list *List) Ask() (int, bool, *List) {
 	list.print()
 	for {
 		cursor.MoveCursorTo(list.GetStartX(), list.GetStartY())
@@ -295,14 +196,13 @@ func (list *List) Ask() (int, bool) {
 				list.incrementPointer()
 			}
 		case constants.Enter: // enter
-			list.setAnswerElem()
 			list.finished = true
 		case constants.CtrlC: // ctrl + c
 			list.canceled = true
 		}
 	}
 	if list.finished {
-		return list.pointerPosition, list.canceled
+		return list.pointerPosition, list.canceled, list
 	}
-	return 0, list.canceled
+	return 0, list.canceled, list
 }

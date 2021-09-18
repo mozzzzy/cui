@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
+	q := cui.Question("Which demonstration do you run?")
+
 	choices := []string{
 		"message",
 		"debug",
@@ -15,7 +17,9 @@ func main() {
 		"notice",
 		"warn",
 		"error",
+		"question",
 		"table",
+		"checkableTable",
 		"input",
 		"secureInput",
 		"confirmation",
@@ -23,13 +27,23 @@ func main() {
 		"progressBar",
 		"spinner",
 	}
-	answers, canceled := cui.Checkbox("Which demonstration do you run?", choices)
+	answers, canceled, checkbox := cui.Checkbox(choices)
+	checkbox.Erase()
 
 	if canceled {
 		cui.Warn("Canceled")
 		cui.Erase()
 		return
 	}
+
+	answerStr := ""
+	for index, a := range answers {
+		answerStr += choices[a]
+		if index < len(answers)-1 {
+			answerStr += ","
+		}
+	}
+	q.SetAnswer(answerStr)
 
 	for _, a := range answers {
 		switch a {
@@ -46,6 +60,10 @@ func main() {
 		case 5:
 			cui.Error("This is error message!!")
 		case 6:
+			qDemo0 := cui.Question("What is your favorite language?")
+			time.Sleep(1 * time.Second)
+			qDemo0.SetAnswer("go")
+		case 7:
 			cui.Table([][]string{
 				{"column0", "column1", "column2", "column3"},
 				{"data00", "data01", "data02", "data03"},
@@ -54,40 +72,66 @@ func main() {
 				{"data30", "data31", "", "data33"},
 				{"data40", "data41", "data42", ""},
 			})
-		case 7:
+		case 8:
+			qDemo1 := cui.Question("Check some rows...")
+			rows := [][]string{
+				{"column0", "column1", "column2", "column3"},
+				{"data00", "data01", "data02", "data03"},
+				{"data10", "data11", "data12", "data13"},
+				{"data20", "data21", "data22", "data23"},
+				{"data30", "data31", "data32", "data33"},
+			}
+			answers, canceled, chkTbl := cui.CheckableTable(rows)
+			chkTbl.Erase()
+			if canceled {
+				cui.Warn("Canceled")
+			} else {
+				answerStr := ""
+				for index, a := range answers {
+					answerStr += rows[a][0]
+					if index < len(answers)-1 {
+						answerStr += ","
+					}
+				}
+				qDemo1.SetAnswer(answerStr)
+			}
+		case 9:
 			answer, canceled := cui.Input("Please type something and press Enter")
 			if canceled {
 				cui.Warn("Canceled")
-				return
+			} else {
+				cui.Info("Answer: \"" + answer + "\"")
 			}
-			cui.Info("Answer: \"" + answer + "\"")
-		case 8:
+		case 10:
 			answer, canceled := cui.SecureInput("Please type something and press Enter")
 			if canceled {
 				cui.Warn("Canceled")
-				return
+			} else {
+				cui.Info("Answer: \"" + answer + "\"")
 			}
-			cui.Info("Answer: \"" + answer + "\"")
-		case 9:
+		case 11:
 			answer, canceled := cui.Confirmation("Please type Y or n and press Enter")
 			if canceled {
 				cui.Warn("Canceled")
-				return
-			}
-			if answer {
-				cui.Info("Accepted.")
 			} else {
-				cui.Warn("Rejected.")
+				if answer {
+					cui.Info("Accepted.")
+				} else {
+					cui.Warn("Rejected.")
+				}
 			}
-		case 10:
+		case 12:
+			qDemo2 := cui.Question("Which operation system do you like?")
+
 			osNames := []string{"Windows", "Linux", "MacOS"}
-			answer, canceled := cui.List("Which operation system do you like?", osNames)
+			answer, canceled, list := cui.List(osNames)
+			list.Erase()
 			if canceled {
 				cui.Warn("Canceled")
-				return
+			} else {
+				qDemo2.SetAnswer(osNames[answer])
 			}
-			cui.Info("Answer: \"" + osNames[answer] + "\"")
-		case 11:
+		case 13:
 			pb0 := cui.ProgressBar("Waiting some operations... (success case)")
 			for i := 1; i <= 100; i++ {
 				time.Sleep(100 * time.Millisecond)
@@ -99,7 +143,7 @@ func main() {
 				pb1.ReportProgress(i)
 			}
 			pb1.Failure()
-		case 12:
+		case 14:
 			spnr0 := cui.Spinner("Waiting some operations... (success case)")
 			time.Sleep(3 * time.Second)
 			spnr0.Complete()
