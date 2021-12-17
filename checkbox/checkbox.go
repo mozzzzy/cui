@@ -214,6 +214,9 @@ func (checkbox *Checkbox) updatePage(goingDown bool) {
  */
 
 func (checkbox Checkbox) Erase() {
+	if !checkbox.printed {
+		return
+	}
 	currentPage := checkbox.pointerPosition / checkbox.onePageLineLen
 	currentPageTop := checkbox.onePageLineLen * currentPage
 	currentPageBottom := currentPageTop + checkbox.onePageLineLen - 1
