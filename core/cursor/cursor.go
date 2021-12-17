@@ -5,7 +5,10 @@ package cursor
  */
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -22,6 +25,7 @@ import (
 
 var (
 	cursorX, cursorY int
+	termLineLen      int
 )
 
 /*
@@ -36,6 +40,33 @@ func GetCursor() (int, int) {
 	return cursorX, cursorY
 }
 
+func GetTermLineLen() (int, error) {
+	// If termLineLen is cached, return it.
+	if termLineLen > 0 {
+		return termLineLen, nil
+	}
+	lineLen := -1
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	stdout, err := cmd.Output()
+	if err != nil {
+		return lineLen, err
+	}
+	SpaceCode := 32
+	for i, b := range stdout {
+		if b != byte(SpaceCode) {
+			continue
+		}
+		lineLen, err = strconv.Atoi(string(stdout[:i]))
+		if err == nil {
+			// Cache the result.
+			termLineLen = lineLen
+		}
+		return lineLen, err
+	}
+	return lineLen, errors.New("Failed to parse the output of stty command.")
+}
+
 func MoveCursorTo(x, y int) {
 	if x < 0 || y < 0 {
 		panic("Invalid coordinates (x, y) = (" + strconv.Itoa(x) + ", " + strconv.Itoa(y) + ")")
@@ -45,7 +76,11 @@ func MoveCursorTo(x, y int) {
 	 *  <-|->  D   C
 	 *    v      B
 	 *
-	 *  \e[n;mH : Go to (n,m)
+	 *  \e[nA   : Move up   cursor by n
+	 *  \e[nB   : Move down cursor by n
+	 *  \e[nD   : Move cursor to left  by n
+	 *  \e[nC   : Move cursor to right by n
+	 *  \e[n;mH : Move cursor to (n,m)
 	 */
 	if cursorX-x > 0 {
 		fmt.Printf("\033[%dD", cursorX-x)

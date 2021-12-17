@@ -18,12 +18,14 @@ import (
  */
 
 type Checkbox struct {
-	choicesElemChain   elementChain.ElementChain
-	choices            []string
-	chosePositions     []int
-	pointerPosition    int
-	finished           bool
-	canceled           bool
+	choicesElemChains []elementChain.ElementChain
+	choices           []string
+	chosePositions    []int
+	pointerPosition   int
+	finished          bool
+	canceled          bool
+	printed           bool
+	onePageLineLen    int
 }
 
 /*
@@ -71,7 +73,7 @@ func contains(src []int, target int) bool {
 func New(choices []string) *Checkbox {
 	/*
 	 * checkbox is following format.
-	 * +--------+----+----+----+-------+--+------+
+	 * +-------------+---------+----------+------+
 	 * |ChosePrefix  | Padding | Choice 0 | \r\n |
 	 * +-------------+---------+----------+------+
 	 * |NoChosePrefix| Padding | Choice 1 | \r\n |
@@ -81,8 +83,10 @@ func New(choices []string) *Checkbox {
 	 * |NoChosePrefix| Padding | Choice 3 | \r\n |
 	 * +-------------+---------+----------+------+
 	 */
-	choicesElemChain := elementChain.New([]element.Element{})
+	choicesElemChains := []elementChain.ElementChain{}
+
 	for _, choice := range choices {
+		choiceElemChain := elementChain.New([]element.Element{})
 		// Prefix
 		elemNoChosePrefix := element.New(NoChosePrefix, NoChosePrefixColors)
 		// Padding
@@ -92,19 +96,28 @@ func New(choices []string) *Checkbox {
 		// Next line
 		elemNextLine := element.New(constants.NewLine, []string{})
 
-		choicesElemChain.Elems = append(choicesElemChain.Elems, *elemNoChosePrefix)
-		choicesElemChain.Elems = append(choicesElemChain.Elems, *elemPadding)
-		choicesElemChain.Elems = append(choicesElemChain.Elems, *elemChoice)
-		choicesElemChain.Elems = append(choicesElemChain.Elems, *elemNextLine)
+		choiceElemChain.Elems = append(choiceElemChain.Elems, *elemNoChosePrefix)
+		choiceElemChain.Elems = append(choiceElemChain.Elems, *elemPadding)
+		choiceElemChain.Elems = append(choiceElemChain.Elems, *elemChoice)
+		choiceElemChain.Elems = append(choiceElemChain.Elems, *elemNextLine)
+
+		choicesElemChains = append(choicesElemChains, *choiceElemChain)
 	}
 
 	checkbox := Checkbox{
-		choicesElemChain:   *choicesElemChain,
-		choices:            choices,
+		choicesElemChains: choicesElemChains,
+		choices:           choices,
 	}
 
 	initialPointerPosition := 0
 	checkbox.movePointerTo(initialPointerPosition)
+
+	termLineLen, err := cursor.GetTermLineLen()
+	if err != nil {
+		panic("Failed to get terminal line length : " + err.Error())
+	}
+	checkbox.onePageLineLen = termLineLen - 3
+
 	return &checkbox
 }
 
@@ -120,11 +133,15 @@ func (checkbox *Checkbox) choose(choiceIndex int) {
 }
 
 func (checkbox *Checkbox) decrementPointer() {
-	checkbox.movePointerTo(checkbox.pointerPosition - 1)
+	if checkbox.pointerPosition > 0 {
+		checkbox.movePointerTo(checkbox.pointerPosition - 1)
+	}
 }
 
 func (checkbox *Checkbox) incrementPointer() {
-	checkbox.movePointerTo(checkbox.pointerPosition + 1)
+	if checkbox.pointerPosition < len(checkbox.choices)-1 {
+		checkbox.movePointerTo(checkbox.pointerPosition + 1)
+	}
 }
 
 func (checkbox *Checkbox) movePointerTo(pointerPosition int) {
@@ -143,29 +160,53 @@ func (checkbox *Checkbox) unChoose(choiceIndex int) {
 
 func (checkbox *Checkbox) updateElems() {
 	// Update prefix and colors
-	for i := 0; i < len(checkbox.choicesElemChain.Elems); i += 4 {
-		// Convert element index to choice index
-		choiceIndex := i / 4
-		if contains(checkbox.chosePositions, choiceIndex) { // If chose
+	for i := 0; i < len(checkbox.choicesElemChains); i++ {
+		if contains(checkbox.chosePositions, i) { // If chose
 			// Prefix
-			checkbox.choicesElemChain.Elems[i].Str = ChosePrefix
-			checkbox.choicesElemChain.Elems[i].Colors = ChosePrefixColors
+			checkbox.choicesElemChains[i].Elems[0].Str = ChosePrefix
+			checkbox.choicesElemChains[i].Elems[0].Colors = ChosePrefixColors
 			// Choice
-			checkbox.choicesElemChain.Elems[i+2].Colors = ChoseColors
+			checkbox.choicesElemChains[i].Elems[2].Colors = ChoseColors
 		} else { // if not chose
 			// Prefix
-			checkbox.choicesElemChain.Elems[i].Str = NoChosePrefix
-			checkbox.choicesElemChain.Elems[i].Colors = NoChosePrefixColors
+			checkbox.choicesElemChains[i].Elems[0].Str = NoChosePrefix
+			checkbox.choicesElemChains[i].Elems[0].Colors = NoChosePrefixColors
 			// Choice
-			checkbox.choicesElemChain.Elems[i+2].Colors = NoChoseColors
+			checkbox.choicesElemChains[i].Elems[2].Colors = NoChoseColors
 		}
 	}
 	// Set pointer color
-	pointerElemStart := checkbox.pointerPosition * 4
-	checkbox.choicesElemChain.Elems[pointerElemStart].Colors =
+	checkbox.choicesElemChains[checkbox.pointerPosition].Elems[0].Colors =
 		constants.PointerColors
-	checkbox.choicesElemChain.Elems[pointerElemStart+2].Colors =
+	checkbox.choicesElemChains[checkbox.pointerPosition].Elems[2].Colors =
 		constants.PointerColors
+}
+
+func (checkbox *Checkbox) updatePage(goingDown bool) {
+	var lastPointerPosition int
+	if goingDown {
+		lastPointerPosition = checkbox.pointerPosition - 1
+	} else {
+		lastPointerPosition = checkbox.pointerPosition + 1
+	}
+
+	lastPage := lastPointerPosition / checkbox.onePageLineLen
+	currentPage := checkbox.pointerPosition / checkbox.onePageLineLen
+
+	if lastPage == currentPage {
+		return
+	}
+
+	lastPageTop := checkbox.onePageLineLen * lastPage
+	lastPageBottom := lastPageTop + checkbox.onePageLineLen - 1
+	for i := lastPageTop; i <= lastPageBottom; i++ {
+		if i >= len(checkbox.choices) {
+			break
+		}
+		checkbox.choicesElemChains[i].Erase()
+	}
+	cursor.MoveCursorTo(checkbox.GetStartX(), checkbox.GetStartY())
+	checkbox.printed = false
 }
 
 /*
@@ -173,54 +214,82 @@ func (checkbox *Checkbox) updateElems() {
  */
 
 func (checkbox Checkbox) Erase() {
-	checkbox.choicesElemChain.Erase()
+	currentPage := checkbox.pointerPosition / checkbox.onePageLineLen
+	currentPageTop := checkbox.onePageLineLen * currentPage
+	currentPageBottom := currentPageTop + checkbox.onePageLineLen - 1
+
+	for i := currentPageTop; i <= currentPageBottom; i++ {
+		if i >= len(checkbox.choices) {
+			break
+		}
+		checkbox.choicesElemChains[i].Erase()
+	}
+	cursor.MoveCursorTo(
+		checkbox.choicesElemChains[0].GetStartX(),
+		checkbox.choicesElemChains[0].GetStartY())
 }
 
 func (checkbox Checkbox) GetMinX() int {
-	return checkbox.choicesElemChain.GetMinX()
+	var minX int
+	for _, elemChain := range checkbox.choicesElemChains {
+		currentMinX := elemChain.GetMinX()
+		if minX > currentMinX {
+			minX = currentMinX
+		}
+	}
+	return minX
 }
 
 func (checkbox Checkbox) GetMinY() int {
-	return checkbox.choicesElemChain.GetMinY()
+	return checkbox.choicesElemChains[0].GetMinY()
 }
 
 func (checkbox Checkbox) GetMaxX() int {
-	return checkbox.choicesElemChain.GetMaxX()
+	var maxX int
+	for _, elemChain := range checkbox.choicesElemChains {
+		currentMaxX := elemChain.GetMaxX()
+		if maxX < currentMaxX {
+			maxX = currentMaxX
+		}
+	}
+	return maxX
 }
 
 func (checkbox Checkbox) GetMaxY() int {
-	return checkbox.choicesElemChain.GetMaxY()
+	return checkbox.choicesElemChains[len(checkbox.choices)].GetMaxY()
 }
 
 func (checkbox Checkbox) GetStartX() int {
-	return checkbox.choicesElemChain.GetStartX()
+	return checkbox.choicesElemChains[0].GetStartX()
 }
 
 func (checkbox Checkbox) GetStartY() int {
-	return checkbox.choicesElemChain.GetStartY()
+	return checkbox.choicesElemChains[0].GetStartY()
 }
 
 func (checkbox Checkbox) GetEndX() int {
-	return checkbox.choicesElemChain.GetEndX()
+	return checkbox.choicesElemChains[len(checkbox.choices)].GetEndX()
 }
 
 func (checkbox Checkbox) GetEndY() int {
-	return checkbox.choicesElemChain.GetEndY()
+	return checkbox.choicesElemChains[len(checkbox.choices)].GetEndY()
 }
 
 func (checkbox *Checkbox) Ask() ([]int, bool, *Checkbox) {
 	checkbox.Print()
 	inputHelper.SetRaw(true)
+	inputHelper.SetNoEcho(true)
 	for {
 		cursor.MoveCursorTo(checkbox.GetStartX(), checkbox.GetStartY())
 		checkbox.Print()
+		cursor.MoveCursorTo(
+			checkbox.choicesElemChains[checkbox.pointerPosition].GetStartX(),
+			checkbox.choicesElemChains[checkbox.pointerPosition].GetStartY())
 		if checkbox.finished || checkbox.canceled {
 			break
 		}
 		// Get keyboard input
-		inputHelper.SetNoEcho(true)
 		inputRunes := inputHelper.Getch()
-		inputHelper.SetNoEcho(false)
 
 		switch string(inputRunes) {
 		case constants.UpArrow: // up arrow key
@@ -228,12 +297,14 @@ func (checkbox *Checkbox) Ask() ([]int, bool, *Checkbox) {
 		case "k": // up
 			if checkbox.pointerPosition > 0 {
 				checkbox.decrementPointer()
+				checkbox.updatePage(false)
 			}
 		case constants.DownArrow: // down arrow key
 			fallthrough
 		case "j": // down
 			if checkbox.pointerPosition < len(checkbox.choices)-1 {
 				checkbox.incrementPointer()
+				checkbox.updatePage(true)
 			}
 		case constants.Enter: // enter
 			checkbox.finished = true
@@ -249,6 +320,7 @@ func (checkbox *Checkbox) Ask() ([]int, bool, *Checkbox) {
 			checkbox.canceled = true
 		}
 	}
+	inputHelper.SetNoEcho(false)
 	inputHelper.SetRaw(false)
 
 	var answers []string
@@ -261,5 +333,34 @@ func (checkbox *Checkbox) Ask() ([]int, bool, *Checkbox) {
 }
 
 func (checkbox *Checkbox) Print() {
-	checkbox.choicesElemChain.Print()
+	currentPage := checkbox.pointerPosition / checkbox.onePageLineLen
+	currentPageTop := checkbox.onePageLineLen * currentPage
+	currentPageBottom := currentPageTop + checkbox.onePageLineLen - 1
+
+	if checkbox.printed {
+		if checkbox.pointerPosition > currentPageTop {
+			cursor.MoveCursorTo(
+				checkbox.choicesElemChains[checkbox.pointerPosition-1].GetStartX(),
+				checkbox.choicesElemChains[checkbox.pointerPosition-1].GetStartY())
+			checkbox.choicesElemChains[checkbox.pointerPosition-1].Print()
+		}
+		if checkbox.pointerPosition < len(checkbox.choices)-1 && checkbox.pointerPosition < currentPageBottom {
+			cursor.MoveCursorTo(
+				checkbox.choicesElemChains[checkbox.pointerPosition+1].GetStartX(),
+				checkbox.choicesElemChains[checkbox.pointerPosition+1].GetStartY())
+			checkbox.choicesElemChains[checkbox.pointerPosition+1].Print()
+		}
+		cursor.MoveCursorTo(
+			checkbox.choicesElemChains[checkbox.pointerPosition].GetStartX(),
+			checkbox.choicesElemChains[checkbox.pointerPosition].GetStartY())
+		checkbox.choicesElemChains[checkbox.pointerPosition].Print()
+	} else {
+		for i := currentPageTop; i <= currentPageBottom; i++ {
+			if i >= len(checkbox.choices) {
+				break
+			}
+			checkbox.choicesElemChains[i].Print()
+		}
+		checkbox.printed = true
+	}
 }

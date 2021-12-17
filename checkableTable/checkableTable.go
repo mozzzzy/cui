@@ -7,6 +7,7 @@ package checkableTable
 import (
 	"github.com/mozzzzy/cui/v3/checkbox"
 	"github.com/mozzzzy/cui/v3/core/constants"
+	"github.com/mozzzzy/cui/v3/core/cursor"
 	"github.com/mozzzzy/cui/v3/core/element"
 	"github.com/mozzzzy/cui/v3/core/elementChain"
 )
@@ -25,8 +26,8 @@ type CheckableTable struct {
  */
 
 var (
-	Line                     string   = "-"
-	LineColors               []string = []string{}
+	Line       string   = "-"
+	LineColors []string = []string{}
 )
 
 /*
@@ -210,7 +211,7 @@ func New(rows [][]string) *CheckableTable {
 
 	checkableTable := CheckableTable{
 		tableHeaderElemChain: *tableHeaderElemChain,
-		checkbox:     *checkbox,
+		checkbox:             *checkbox,
 	}
 	return &checkableTable
 }
@@ -236,4 +237,7 @@ func (checkableTable *CheckableTable) Ask() ([]int, bool, *CheckableTable) {
 func (checkableTable *CheckableTable) Erase() {
 	checkableTable.tableHeaderElemChain.Erase()
 	checkableTable.checkbox.Erase()
+	cursor.MoveCursorTo(
+		checkableTable.tableHeaderElemChain.GetStartX(),
+		checkableTable.tableHeaderElemChain.GetStartY())
 }

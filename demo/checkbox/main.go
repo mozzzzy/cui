@@ -32,7 +32,7 @@ func main() {
 	answerStr := ""
 	for index, a := range answers {
 		answerStr += choices[a]
-		if index < len(answers) - 1 {
+		if index < len(answers)-1 {
 			answerStr += ","
 		}
 	}
